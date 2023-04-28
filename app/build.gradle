@@ -75,5 +75,6 @@ dependencies {
         exclude group: 'com.android.support'
     }
 
-    implementation 'com.google.android. filament filament-android:1.32.1'
+    implementation 'com.google.android.filament:filament-android:1.32.1'
+    implementation 'com.google.android.filament filament-utils-android:1.32.1'
 }
