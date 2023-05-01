@@ -67,14 +67,21 @@ dependencies {
 //    implementation 'com.google.ar.sceneform:core:1.17.1'
 //    implementation 'com.google.ar.sceneform.ux:sceneform-ux:1.17.1'
 
-    implementation ('com.google.ar.sceneform:core:1.17.1') {
-        exclude group: 'com.android.support'
-    }
+//    implementation ('com.google.ar.sceneform:core:1.17.1') {
+//        exclude group: 'com.android.support'
+//    }
+//
+//    implementation ('com.google.ar.sceneform.ux:sceneform-ux:1.17.1') {
+//        exclude group: 'com.android.support'
+//    }
 
-    implementation ('com.google.ar.sceneform.ux:sceneform-ux:1.17.1') {
-        exclude group: 'com.android.support'
-    }
+    implementation 'com.google.android.filament:filament-android:1.33.0'
+    implementation 'com.google.android.filament:filament-utils-android:1.32.1'
 
-    implementation 'com.google.android.filament:filament-android:1.32.1'
-    implementation 'com.google.android.filament filament-utils-android:1.32.1'
+
+    //Retrofit
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.5.1"
 }
