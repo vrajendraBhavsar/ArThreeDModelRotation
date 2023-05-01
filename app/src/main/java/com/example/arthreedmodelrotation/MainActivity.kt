@@ -5,7 +5,6 @@ import android.graphics.Typeface
 import android.os.Bundle
 import android.util.Log
 import android.view.Choreographer
-import android.view.Choreographer.FrameCallback
 import android.view.GestureDetector
 import android.view.GestureDetector.OnDoubleTapListener
 import android.view.Gravity
@@ -23,7 +22,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DefaultChoreographerFrameClock.choreographer
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key.Companion.D
@@ -76,7 +74,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var surfaceView: SurfaceView
     private lateinit var choreographer: Choreographer
     private val frameScheduler = FrameCallback()
-    private lateinit var modelViewer: ModelViewer
+//    private lateinit var modelViewer: ModelViewer
+    private var modelViewer: ModelViewer? = null
     private lateinit var titleBarHint: TextView
     private val doubleTapListener = DoubleTapListener()
     private lateinit var doubleTapDetector: GestureDetector
@@ -157,45 +156,47 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        choreographer = Choreographer.getInstance()
+//        titleBarHint = findViewById(R.id.user_hint)
+//        surfaceView = findViewById(R.id.main_sv)
         setContent {
             ArThreeDModelRotationTheme {
+                    SurfaceViewWrapper()
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-
-                    titleBarHint = findViewById(R.id.user_hint)
-                    surfaceView = findViewById(R.id.main_sv)
-                    choreographer = Choreographer.getInstance()
-
+                    titleBarHint = window.findViewById(R.id.user_hint)
+                    surfaceView = window.findViewById(R.id.main_sv)
                     doubleTapDetector =
                         GestureDetector(applicationContext, doubleTapListener)
 
                     modelViewer = ModelViewer(surfaceView)
-                    viewerContent.view = modelViewer.view
-                    viewerContent.sunlight = modelViewer.light
-                    viewerContent.lightManager = modelViewer.engine.lightManager
-                    viewerContent.scene = modelViewer.scene
-                    viewerContent.renderer = modelViewer.renderer
-                    surfaceView.setOnTouchListener { _, motionEvent ->
-                        modelViewer.onTouchEvent(motionEvent)
-                        doubleTapDetector.onTouchEvent(motionEvent)
-                        true
+                    modelViewer?.let { modelViewer ->
+                        viewerContent.view = modelViewer.view
+                        viewerContent.sunlight = modelViewer.light
+                        viewerContent.lightManager = modelViewer.engine.lightManager
+                        viewerContent.scene = modelViewer.scene
+                        viewerContent.renderer = modelViewer.renderer
+                        surfaceView.setOnTouchListener { _, motionEvent ->
+                            modelViewer.onTouchEvent(motionEvent)
+                            doubleTapDetector.onTouchEvent(motionEvent)
+                            true
+                        }
                     }
 
 //                    lifecycleScope.launch {
-                    LaunchedEffect(key1 = true) {}
-                        downloadGltf()
-                    }
-
+//                    LaunchedEffect(key1 = true) {
+//                        downloadGltf()
+//                    }
                     createDefaultRenderables()
                     createIndirectLight()
 
                     setStatusText("To load a new model, go to the above URL on your host machine.")
 
-                    val view = modelViewer.view
+                    val view = modelViewer!!.view
                     /*
                     * Note: The settings below are overriden when connecting to the remote UI.
                     */
@@ -232,26 +233,28 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
 
     //Here we'll load GLB/ GLTF model
     private fun createDefaultRenderables() {
-        val buffer = assets.open("models/Duck.glb").use { input ->
+        val buffer = assets.open("models/scene.gltf").use { input ->
             val bytes = ByteArray(input.available())
             input.read(bytes)
             ByteBuffer.wrap(bytes)
         }
-        modelViewer.loadModelGltfAsync(buffer) { uri -> readCompressedAsset("models/$uri") }
+
+        modelViewer!!.loadModelGltfAsync(buffer) { uri -> readCompressedAsset("models/$uri") }
         updateRootTransform()
     }
 
     private fun createIndirectLight() {
-        val engine = modelViewer.engine
-        val scene = modelViewer.scene
-        val ibl = "venetian_crossroads_2k"
+        val engine = modelViewer!!.engine
+        val scene = modelViewer!!.scene
+        val ibl = "default_env"
         readCompressedAsset("envs/$ibl/${ibl}_ibl.ktx").let {
-            scene.indirectLight = createIndirectLight(engine, it)
+            scene.indirectLight = KTX1Loader.createIndirectLight(engine, it)
             scene.indirectLight!!.intensity = 30_000.0f
-            viewerContent.indirectLight = modelViewer.scene.indirectLight
+            viewerContent.indirectLight = modelViewer?.scene?.indirectLight
         }
         readCompressedAsset("envs/$ibl/${ibl}_skybox.ktx").let {
             scene.skybox = KTX1Loader.createSkybox(engine, it)
@@ -276,35 +279,34 @@ class MainActivity : ComponentActivity() {
         runOnUiThread {
             if (statusToast == null || statusText != text) {
                 statusText = text
-                statusToast =
-                    Toast.makeText(applicationContext, text, Toast.LENGTH_SHORT)
+                statusToast = Toast.makeText(applicationContext, text, Toast.LENGTH_SHORT)
                 statusToast!!.show()
+
             }
         }
     }
 
     private suspend fun loadGlb(message: RemoteServer.ReceivedMessage) {
         withContext(Dispatchers.Main) {
-            modelViewer.destroyModel()
-            modelViewer.loadModelGlb(message.buffer)
+            modelViewer?.destroyModel()
+            modelViewer?.loadModelGlb(message.buffer)
             updateRootTransform()
             loadStartTime = System.nanoTime()
-            loadStartTime = modelViewer.engine.createFence()
+            loadStartFence = modelViewer?.engine?.createFence()
         }
     }
 
     private suspend fun loadHdr(message: RemoteServer.ReceivedMessage) {
         withContext(Dispatchers.Main) {
-            val engine = modelViewer.engine
-            val equirect = HDRLoader.createTexture(engine, message.buffer)
+            val engine = modelViewer?.engine
+            val equirect = engine?.let { HDRLoader.createTexture(it, message.buffer) }
             if (equirect == null) {
                 setStatusText("Could not decode HDR file.")
             } else {
                 setStatusText("Successfully decoded HDR file.")
 
                 val context = IBLPrefilterContext(engine)
-                val equirectToCubemap =
-                    IBLPrefilterContext.EquirectangularToCubemap(context)
+                val equirectToCubemap = IBLPrefilterContext.EquirectangularToCubemap(context)
                 val skyboxTexture = equirectToCubemap.run(equirect)!!
                 engine.destroyTexture(equirect)
 
@@ -313,7 +315,7 @@ class MainActivity : ComponentActivity() {
 
                 val ibl = IndirectLight.Builder()
                     .reflections(reflections)
-                    .intensity(36000.0f)
+                    .intensity(30000.0f)
                     .build(engine)
 
                 val sky = Skybox.Builder().environment(skyboxTexture).build(engine)
@@ -322,12 +324,12 @@ class MainActivity : ComponentActivity() {
                 equirectToCubemap.destroy()
                 context.destroy()
 
-                //destroy the previous IBL
-                engine.destroyIndirectLight(modelViewer.scene.indirectLight!!)
-                engine.destroySkybox(modelViewer.scene.skybox!!)
+                // destroy the previous IBl
+                engine.destroyIndirectLight(modelViewer?.scene?.indirectLight!!)
+                engine.destroySkybox(modelViewer?.scene?.skybox!!)
 
-                modelViewer.scene.skybox = sky
-                modelViewer.scene.indirectLight = ibl
+                modelViewer?.scene?.skybox = sky
+                modelViewer?.scene?.indirectLight = ibl
                 viewerContent.indirectLight = ibl
             }
         }
@@ -335,7 +337,7 @@ class MainActivity : ComponentActivity() {
 
     private suspend fun loadZip(message: RemoteServer.ReceivedMessage) {
         withContext(Dispatchers.Main) {
-            modelViewer.destroyModel()
+            modelViewer?.destroyModel()
         }
 
         // Large zip files should first be written to a file to prevent OOM.
@@ -364,17 +366,17 @@ class MainActivity : ComponentActivity() {
                 if (entry.name.startsWith("__MACOSX")) continue
                 if (entry.name.startsWith(".DS_Store")) continue
 
-                val uri: String = entry.name
+                val uri = entry.name
                 val byteArray: ByteArray? = try {
                     deflater.readBytes()
-                } catch (e: OutOfMemoryError) {
+                }
+                catch (e: OutOfMemoryError) {
                     outOfMemory = uri
                     break
                 }
-                Log.i("TAG", "Deflated ${byteArray!!.size} bytes from $uri")
+                Log.i(TAG, "Deflated ${byteArray!!.size} bytes from $uri")
                 val buffer = ByteBuffer.wrap(byteArray)
                 mapping[uri] = buffer
-
                 if (uri.endsWith(".gltf") || uri.endsWith(".glb")) {
                     gltfPath = uri
                 }
@@ -393,7 +395,6 @@ class MainActivity : ComponentActivity() {
             setStatusText("0ut of memory while deflating $outOfMemory")
             return
         }
-        //..
         val gltfBuffer = pathToBufferMapping[gltfPath]!!
 
         // In a zip file, the gltf file might be in the same folder as resources, or in a different
@@ -403,15 +404,12 @@ class MainActivity : ComponentActivity() {
 
         withContext(Dispatchers.Main) {
             if (gltfPath!!.endsWith(".glb")) {
-                    modelViewer.loadModelGlb(gltfBuffer)
-                } else {
-                modelViewer.loadModelGltf(gltfBuffer) { uri ->
+                modelViewer?.loadModelGlb(gltfBuffer)
+            } else {
+                modelViewer?.loadModelGltf(gltfBuffer) { uri ->
                     val path = prefix.resolve(uri).toString()
                     if (!pathToBufferMapping.contains(path)) {
-                        Log.e(
-                            TAG,
-                            "Could not find '$uri' in zip using prefix '$prefix' and base path '${gltfPath!!}'"
-                        )
+                        Log.e(TAG, "Could not find '$uri' in zip using prefix '$prefix' and base path '${gltfPath!!}'")
                         setStatusText("Zip is missing $path")
                     }
                     pathToBufferMapping[path]
@@ -419,7 +417,7 @@ class MainActivity : ComponentActivity() {
             }
             updateRootTransform()
             loadStartTime = System.nanoTime()
-            loadStartFence = modelViewer.engine.createFence()
+            loadStartFence = modelViewer?.engine?.createFence()
         }
     }
 
@@ -440,10 +438,7 @@ class MainActivity : ComponentActivity() {
     }
 
     fun loadModelData(message: RemoteServer.ReceivedMessage) {
-        Log.i(
-            TAG,
-            "Download model ${message.label} (${message.buffer.capacity()} bytes)"
-        )
+        Log.i(TAG, "Downloaded model ${message.label} (${message.buffer.capacity()} bytes)")
         clearStatusText()
         titleBarHint.text = message.label
         CoroutineScope(Dispatchers.IO).launch {
@@ -457,27 +452,26 @@ class MainActivity : ComponentActivity() {
 
     fun loadSettings(message: RemoteServer.ReceivedMessage) {
         val json = StandardCharsets.UTF_8.decode(message.buffer).toString()
-        viewerContent.applyLights = modelViewer.asset?.lightEntities
-        automation.applySettings(modelViewer.engine, json, viewerContent)
-        modelViewer.view.colorGrading =
-            automation.getColorGrading(modelViewer.engine)
-        modelViewer.cameraFocalLength = automation.viewerOptions.cameraFocalLength
-        modelViewer.cameraNear = automation.viewerOptions.cameraNear
-        modelViewer.cameraFar = automation.viewerOptions.cameraFar
+        viewerContent.assetLights = modelViewer?.asset?.lightEntities
+        modelViewer?.engine?.let { automation.applySettings(it, json, viewerContent) }
+        modelViewer?.view?.colorGrading =
+            modelViewer?.engine?.let { automation.getColorGrading(it) }
+        modelViewer?.cameraFocalLength = automation.viewerOptions.cameraFocalLength
+        modelViewer?.cameraNear = automation.viewerOptions.cameraNear
+        modelViewer?.cameraFar = automation.viewerOptions.cameraFar
         updateRootTransform()
     }
 
     private fun updateRootTransform() {
         if (automation.viewerOptions.autoScaleEnabled) {
-            modelViewer.transformToUnitCube()
+            modelViewer?.transformToUnitCube()
         } else {
-            modelViewer.clearRootTransform()
+            modelViewer?.clearRootTransform()
         }
     }
 
     inner class FrameCallback : Choreographer.FrameCallback {
         private val startTime = System.nanoTime()
-
         override fun doFrame(frameTimeNanos: Long) {
             choreographer.postFrameCallback(this)
 
@@ -494,20 +488,20 @@ class MainActivity : ComponentActivity() {
                         TAG,
                         "The Filament backend took $total ms to load the model geometry."
                     )
-                    modelViewer.engine.destroyFence(it)
+                    modelViewer?.engine?.destroyFence(it)
                     loadStartFence = null
                 }
             }
 
-            modelViewer.animator?.apply {
-                if (animationCount > 8) {
-                    val elapsedTineSeconds =
-                        (frameTimeNanos - loadStartTime).toDouble() / 1_000_000_000
-                    applyAnimation(0, elapsedTineSeconds.toFloat())
+            modelViewer?.animator?.apply {
+                if (animationCount > 0) {
+                    val elapsedTimeSeconds = (frameTimeNanos - startTime).toDouble() / 1_000_000_000
+                    applyAnimation(0, elapsedTimeSeconds.toFloat())
                 }
                 updateBoneMatrices()
             }
-            modelViewer.render(frameTimeNanos)
+
+            modelViewer?.render(frameTimeNanos)
             //Check if a new download is in progress. If so, let the user know with toast 3
             val currentDownload = remoteServer?.peekIncomingLabel()
             if (RemoteServer.isBinary(currentDownload) && currentDownload != latestDownload) {
@@ -522,7 +516,6 @@ class MainActivity : ComponentActivity() {
                 if (message.label == latestDownload) {
                     latestDownload = null
                 }
-
                 if (RemoteServer.isJson(message.label)) {
                     loadSettings(message)
                 } else {
@@ -536,7 +529,7 @@ class MainActivity : ComponentActivity() {
     // Just for testing purposes, this releases the current model and reloads the default model.
     inner class DoubleTapListener : GestureDetector.SimpleOnGestureListener() {
         override fun onDoubleTap(e: MotionEvent): Boolean {
-            modelViewer.destroyModel()
+            modelViewer?.destroyModel()
             createDefaultRenderables()
             return super.onDoubleTap(e)
         }
@@ -569,46 +562,50 @@ class MainActivity : ComponentActivity() {
 fun SurfaceViewWrapper() {
     AndroidView(
         factory = { context ->
-            val linearLayout = LinearLayout(context).apply {
-                orientation = LinearLayout.VERTICAL
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                )
-            }
 
-            val textView = TextView(context).apply {
-                id = R.id.user_hint
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    50
-                ).apply {
-                    gravity =
-                        Gravity.CENTER_HORIZONTAL or Gravity.CENTER_VERTICAL
-                }
-                text = "https://google.github.io/filament/remote"
-                textSize = 18f
-                setTypeface(null, Typeface.BOLD)
-                isClickable = true
-                isFocusable = true
-            }
+            android.view.View.inflate(context, R.layout.surface_view_layout, null)  //XML view is inflated to use inside Compose
 
-            val surfaceView =
-                SurfaceView(context).apply {  //To render a 3D model w have a Surface View
-                    id = R.id.main_sv
-                    layoutParams = LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        0
-                    ).apply {
-                        weight = 1f
-                    }
-                    // setup your SurfaceView here
-                }
-
-            linearLayout.addView(textView)
-            linearLayout.addView(surfaceView)
-            linearLayout
+//            val linearLayout = LinearLayout(context).apply {
+//                orientation = LinearLayout.VERTICAL
+//                layoutParams = ViewGroup.LayoutParams(
+//                    ViewGroup.LayoutParams.MATCH_PARENT,
+//                    ViewGroup.LayoutParams.MATCH_PARENT
+//                )
+//            }
+//
+//            val textView = TextView(context).apply {
+//                id = R.id.user_hint
+//                layoutParams = ViewGroup.LayoutParams(
+//                    ViewGroup.LayoutParams.MATCH_PARENT,
+//                    50
+//                ).apply {
+//                    gravity =
+//                        Gravity.CENTER_HORIZONTAL or Gravity.CENTER_VERTICAL
+//                }
+//                text = "https://google.github.io/filament/remote"
+//                textSize = 18f
+//                setTypeface(null, Typeface.BOLD)
+//                isClickable = true
+//                isFocusable = true
+//            }
+//
+//            val surfaceView =
+//                SurfaceView(context).apply {  //To render a 3D model w have a Surface View
+//                    id = R.id.main_sv
+//                    layoutParams = LinearLayout.LayoutParams(
+//                        ViewGroup.LayoutParams.MATCH_PARENT,
+//                        0
+//                    ).apply {
+//                        weight = 1f
+//                    }
+//                    // setup your SurfaceView here
+//                }
+//
+//            linearLayout.addView(textView)
+//            linearLayout.addView(surfaceView)
+//            linearLayout
         },
+        modifier = Modifier.fillMaxSize(),
         update = { surfaceView ->
             // update your SurfaceView here if necessary
         }
