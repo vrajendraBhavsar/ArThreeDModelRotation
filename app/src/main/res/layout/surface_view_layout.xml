@@ -6,7 +6,7 @@
     android:orientation="vertical">
 
     <TextView
-        android:id="@+id/user_hint"
+        android:id="@+id/tvUserHint"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:gravity="center"
@@ -16,7 +16,7 @@
         android:textStyle="bold" />
 
     <SurfaceView
-        android:id="@+id/main_sv"
+        android:id="@+id/svSurfaceView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />

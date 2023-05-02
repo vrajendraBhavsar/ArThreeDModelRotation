@@ -1,18 +1,13 @@
 package com.example.arthreedmodelrotation
 
-import android.graphics.BitmapFactory
-import android.graphics.Typeface
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import android.view.Choreographer
 import android.view.GestureDetector
-import android.view.GestureDetector.OnDoubleTapListener
-import android.view.Gravity
 import android.view.MotionEvent
 import android.view.SurfaceView
-import android.view.ViewGroup
 import android.view.WindowManager
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -22,12 +17,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.key.Key.Companion.D
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.lifecycleScope
 import com.example.arthreedmodelrotation.ui.theme.ArThreeDModelRotationTheme
 import com.google.android.filament.Fence
 import com.google.android.filament.IndirectLight
@@ -37,29 +29,20 @@ import com.google.android.filament.utils.AutomationEngine
 import com.google.android.filament.utils.HDRLoader
 import com.google.android.filament.utils.IBLPrefilterContext
 import com.google.android.filament.utils.KTX1Loader
-import com.google.android.filament.utils.KTX1Loader.createIndirectLight
 import com.google.android.filament.utils.ModelViewer
 import com.google.android.filament.utils.RemoteServer
 import com.google.android.filament.utils.Utils
-import com.google.gson.GsonBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
-import okhttp3.ResponseBody
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
 import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.InputStream
 import java.io.RandomAccessFile
 import java.net.URI
 import java.nio.Buffer
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
-import java.util.concurrent.TimeUnit
 import java.util.zip.ZipInputStream
 
 class MainActivity : ComponentActivity() {
@@ -67,14 +50,12 @@ class MainActivity : ComponentActivity() {
         init {
             Utils.init()
         }
-
         private const val TAG = "mi-gltf-demo"
     }
 
     private lateinit var surfaceView: SurfaceView
     private lateinit var choreographer: Choreographer
     private val frameScheduler = FrameCallback()
-//    private lateinit var modelViewer: ModelViewer
     private var modelViewer: ModelViewer? = null
     private lateinit var titleBarHint: TextView
     private val doubleTapListener = DoubleTapListener()
@@ -88,148 +69,82 @@ class MainActivity : ComponentActivity() {
     private var loadStartFence: Fence? = null
     private val viewerContent = AutomationEngine.ViewerContent()
 
-    private var path: File? = null
-    var file: File? = null
-    private fun createPath(): File? {
-        path = File(filesDir, "gltf")
-        if (path?.exists() == false) {
-            path?.mkdirs()
-        }
-        return path
-    }
-
-    private suspend fun downloadModel(): String? {
-        file = File(createPath(), "Duck.glb")
-        if (file?.exists() == true) {
-            Log.i(TAG, "not downloaded")
-            return "gltf/Duck.glb"
-        } else {
-            Log.i(TAG, "downloading")
-            val okHttpClient = OkHttpClient.Builder()
-                .connectTimeout(3, TimeUnit.MINUTES)
-                .readTimeout(3, TimeUnit.MINUTES)
-                .build()
-            val retrofit = Retrofit.Builder()
-                .client(okHttpClient)
-                .baseUrl("https://raw.githubusercontent.com/")
-                .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
-                .build().create(GltfApi::class.java)
-//            https://raw.githubusercontent.com/Sachinbhola/App-Templates/master/Resources/chair/arm_chair__furniture/scene.gltf
-            val response =
-                retrofit.downloadFile("Sachinbhola/App-Templates/master/Resources/chair/arm_chair__furniture/scene.gltf")
-            return if (response.isSuccessful) {
-                file = File(createPath(), "Duck.glb")
-                file?.absolutePath?.let { saveFile(response.body(), it) }
-                return "gltf/Duck.glb"
-            } else {
-                Log.i(TAG, "Retrofit Error")
-                null
-            }
-        }
-    }
-
-    private fun saveFile(body: ResponseBody?, pathWhereYouWantToSaveFile: String): String {
-        if (body == null)
-            return ""
-
-        var input: InputStream? = null
-        try {
-            input = body.byteStream()
-            //val file = File(getCachedir(), "cacheFileAppeal.srl")
-            val fos = FileOutputStream(pathWhereYouWantToSaveFile)
-            fos.use { output ->
-                val buffer = ByteArray(4 * 1024) // or other buffer size
-                var read: Int
-                while (input.read(buffer).also { read = it } != -1) {
-                    output.write(buffer,0, read)
-                }
-                output.flush()
-            }
-            return pathWhereYouWantToSaveFile
-        } catch (e: Exception) {
-            Log.e( "saveFile", e.toString())
-        } finally {
-            input?.close()
-        }
-        return ""
-    }
-
+    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         choreographer = Choreographer.getInstance()
-//        titleBarHint = findViewById(R.id.user_hint)
-//        surfaceView = findViewById(R.id.main_sv)
+
         setContent {
             ArThreeDModelRotationTheme {
-                    SurfaceViewWrapper()
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    titleBarHint = window.findViewById(R.id.user_hint)
-                    surfaceView = window.findViewById(R.id.main_sv)
-                    doubleTapDetector =
-                        GestureDetector(applicationContext, doubleTapListener)
-
-                    modelViewer = ModelViewer(surfaceView)
-                    modelViewer?.let { modelViewer ->
-                        viewerContent.view = modelViewer.view
-                        viewerContent.sunlight = modelViewer.light
-                        viewerContent.lightManager = modelViewer.engine.lightManager
-                        viewerContent.scene = modelViewer.scene
-                        viewerContent.renderer = modelViewer.renderer
-                        surfaceView.setOnTouchListener { _, motionEvent ->
-                            modelViewer.onTouchEvent(motionEvent)
-                            doubleTapDetector.onTouchEvent(motionEvent)
-                            true
-                        }
-                    }
-
-//                    lifecycleScope.launch {
-//                    LaunchedEffect(key1 = true) {
-//                        downloadGltf()
+                    SurfaceViewWrapper()
+//
+//                    Log.d(TAG, "!@# SURFACE VIEW onCreate: $surfaceView")
+//                    modelViewer = ModelViewer(surfaceView)
+//
+////                    titleBarHint = window.findViewById(R.id.tvUserHint)
+////                    surfaceView = window.findViewById(R.id.svSurfaceView)
+//                    doubleTapDetector =
+//                        GestureDetector(applicationContext, doubleTapListener)
+//
+//                    modelViewer?.let { modelViewer ->
+//                        viewerContent.view = modelViewer.view
+//                        viewerContent.sunlight = modelViewer.light
+//                        viewerContent.lightManager = modelViewer.engine.lightManager
+//                        viewerContent.scene = modelViewer.scene
+//                        viewerContent.renderer = modelViewer.renderer
+//                        surfaceView.setOnTouchListener { _, motionEvent ->
+//                            modelViewer.onTouchEvent(motionEvent)
+//                            doubleTapDetector.onTouchEvent(motionEvent)
+//                            true
+//                        }
 //                    }
+
                     createDefaultRenderables()
                     createIndirectLight()
 
                     setStatusText("To load a new model, go to the above URL on your host machine.")
 
-                    val view = modelViewer!!.view
+                    val view = modelViewer?.view
                     /*
-                    * Note: The settings below are overriden when connecting to the remote UI.
+                    * Note: The settings below are override when connecting to the remote UI.
                     */
 
-                    // on mobile, better use lower quality color buffer
-                    view.renderQuality = view.renderQuality.apply {
-                        hdrColorBuffer = View.QualityLevel.MEDIUM
-                    }
-                    // dynamic resolution often helps a lot
-                    view.dynamicResolutionOptions =
-//                        view.dynamicResolutionBitmapFactory.Options.apply {
-                        view.dynamicResolutionOptions.apply {
-                            enabled = true
-                            quality = View.QualityLevel.MEDIUM
+                    view?.let { view ->
+                        // on mobile, better use lower quality color buffer
+                        view.renderQuality = view.renderQuality.apply {
+                            hdrColorBuffer = View.QualityLevel.MEDIUM
                         }
-                    // MSAA is needed with dynamic resolution MEDIUM
-                    view.multiSampleAntiAliasingOptions =
-                        view.multiSampleAntiAliasingOptions.apply {
+                        // dynamic resolution often helps a lot
+                        view.dynamicResolutionOptions =
+//                        view.dynamicResolutionBitmapFactory.Options.apply {
+                            view.dynamicResolutionOptions.apply {
+                                enabled = true
+                                quality = View.QualityLevel.MEDIUM
+                            }
+                        // MSAA is needed with dynamic resolution MEDIUM
+                        view.multiSampleAntiAliasingOptions =
+                            view.multiSampleAntiAliasingOptions.apply {
 
-                            // FXAA is pretty cheap and helps a lot
-                            view.antiAliasing = View.AntiAliasing.FXAA
-// ambient occlusion is the cheapest effect that adds a lot of quality
-                            view.ambientOcclusionOptions =
-                                view.ambientOcclusionOptions.apply {
+                                // FXAA is pretty cheap and helps a lot
+                                view.antiAliasing = View.AntiAliasing.FXAA
+                                // ambient occlusion is the cheapest effect that adds a lot of quality
+                                view.ambientOcclusionOptions =
+                                    view.ambientOcclusionOptions.apply {
+                                        enabled = true
+                                    }
+                                // bloom is pretty expensive but adds a fair amount of realism
+                                view.bloomOptions = view.bloomOptions.apply {
                                     enabled = true
                                 }
-// bloom is pretty expensive but adds a fair amount of realism
-                            view.bloomOptions = view.bloomOptions.apply {
-                                enabled = true
+                                remoteServer = RemoteServer(8082)
                             }
-                            remoteServer = RemoteServer(8082)
-                            //....
-                        }
+                    }
                 }
             }
         }
@@ -237,27 +152,27 @@ class MainActivity : ComponentActivity() {
 
     //Here we'll load GLB/ GLTF model
     private fun createDefaultRenderables() {
-        val buffer = assets.open("models/scene.gltf").use { input ->
+        val buffer = assets.open("models/armchair_leather.glb").use { input ->
             val bytes = ByteArray(input.available())
             input.read(bytes)
             ByteBuffer.wrap(bytes)
         }
 
-        modelViewer!!.loadModelGltfAsync(buffer) { uri -> readCompressedAsset("models/$uri") }
+        modelViewer?.loadModelGltfAsync(buffer) { uri -> readCompressedAsset("models/$uri") }
         updateRootTransform()
     }
 
     private fun createIndirectLight() {
-        val engine = modelViewer!!.engine
-        val scene = modelViewer!!.scene
+        val engine = modelViewer?.engine
+        val scene = modelViewer?.scene
         val ibl = "default_env"
         readCompressedAsset("envs/$ibl/${ibl}_ibl.ktx").let {
-            scene.indirectLight = KTX1Loader.createIndirectLight(engine, it)
-            scene.indirectLight!!.intensity = 30_000.0f
+            scene?.indirectLight = engine?.let { it1 -> KTX1Loader.createIndirectLight(it1, it) }
+            scene?.indirectLight?.intensity = 30_000.0f
             viewerContent.indirectLight = modelViewer?.scene?.indirectLight
         }
         readCompressedAsset("envs/$ibl/${ibl}_skybox.ktx").let {
-            scene.skybox = KTX1Loader.createSkybox(engine, it)
+            scene?.skybox = engine?.let { it1 -> KTX1Loader.createSkybox(it1, it) }
         }
     }
 
@@ -280,8 +195,8 @@ class MainActivity : ComponentActivity() {
             if (statusToast == null || statusText != text) {
                 statusText = text
                 statusToast = Toast.makeText(applicationContext, text, Toast.LENGTH_SHORT)
-                statusToast!!.show()
-
+                statusToast?.show()
+                Log.d(TAG, "!@# setStatusText: $text")
             }
         }
     }
@@ -307,7 +222,7 @@ class MainActivity : ComponentActivity() {
 
                 val context = IBLPrefilterContext(engine)
                 val equirectToCubemap = IBLPrefilterContext.EquirectangularToCubemap(context)
-                val skyboxTexture = equirectToCubemap.run(equirect)!!
+                val skyboxTexture = equirectToCubemap.run(equirect)
                 engine.destroyTexture(equirect)
 
                 val specularFilter = IBLPrefilterContext.SpecularFilter(context)
@@ -325,8 +240,8 @@ class MainActivity : ComponentActivity() {
                 context.destroy()
 
                 // destroy the previous IBl
-                engine.destroyIndirectLight(modelViewer?.scene?.indirectLight!!)
-                engine.destroySkybox(modelViewer?.scene?.skybox!!)
+                modelViewer?.scene?.indirectLight?.let { engine.destroyIndirectLight(it) }
+                modelViewer?.scene?.skybox?.let { engine.destroySkybox(it) }
 
                 modelViewer?.scene?.skybox = sky
                 modelViewer?.scene?.indirectLight = ibl
@@ -369,12 +284,11 @@ class MainActivity : ComponentActivity() {
                 val uri = entry.name
                 val byteArray: ByteArray? = try {
                     deflater.readBytes()
-                }
-                catch (e: OutOfMemoryError) {
+                } catch (e: OutOfMemoryError) {
                     outOfMemory = uri
                     break
                 }
-                Log.i(TAG, "Deflated ${byteArray!!.size} bytes from $uri")
+                Log.i(TAG, "Deflated ${byteArray?.size} bytes from $uri")
                 val buffer = ByteBuffer.wrap(byteArray)
                 mapping[uri] = buffer
                 if (uri.endsWith(".gltf") || uri.endsWith(".glb")) {
@@ -395,24 +309,29 @@ class MainActivity : ComponentActivity() {
             setStatusText("0ut of memory while deflating $outOfMemory")
             return
         }
-        val gltfBuffer = pathToBufferMapping[gltfPath]!!
+        val gltfBuffer = pathToBufferMapping[gltfPath]
 
         // In a zip file, the gltf file might be in the same folder as resources, or in a different
         // folder. It is crucial to test against both of these cases. In any case, the resource
         // paths are all specified relative to the location of the gltf file.
-        var prefix = URI(gltfPath!!).resolve(".")
+        var prefix = URI(gltfPath).resolve(".")
 
         withContext(Dispatchers.Main) {
-            if (gltfPath!!.endsWith(".glb")) {
-                modelViewer?.loadModelGlb(gltfBuffer)
+            if (gltfPath?.endsWith(".glb") == true) {
+                gltfBuffer?.let { modelViewer?.loadModelGlb(it) }
             } else {
-                modelViewer?.loadModelGltf(gltfBuffer) { uri ->
-                    val path = prefix.resolve(uri).toString()
-                    if (!pathToBufferMapping.contains(path)) {
-                        Log.e(TAG, "Could not find '$uri' in zip using prefix '$prefix' and base path '${gltfPath!!}'")
-                        setStatusText("Zip is missing $path")
+                gltfBuffer?.let {
+                    modelViewer?.loadModelGltf(it) { uri ->
+                        val path = prefix.resolve(uri).toString()
+                        if (!pathToBufferMapping.contains(path)) {
+                            Log.e(
+                                TAG,
+                                "Could not find '$uri' in zip using prefix '$prefix' and base path '${gltfPath}'"
+                            )
+                            setStatusText("Zip is missing $path")
+                        }
+                        pathToBufferMapping[path]
                     }
-                    pathToBufferMapping[path]
                 }
             }
             updateRootTransform()
@@ -535,35 +454,16 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-}
-//<?xml version="1.0" encoding="utf-8"?>
-//<LindarLayout xmlns:android="http://schemas.android.com/apk/res/android"
-//android:id="@+id/simple_layout"
-//android:layout_width="match_parent"
-//android:layout_height="match_parent"
-//android:orientation="vertical">
-//<TextView
-//android:id="@+id/user_hint"
-//android:layout_width="match_parent"
-//android:layout_height="50dp"
-//android:gravity="center center_horizontal center_vertical"
-//android:text="https://google.github.io/filament/remote"
-//android:textIsSelectable="true"
-//android:textSize="18sp"
-//android:textStyle="bold" />
-//<SurfaceView
-//android:id="@+id/main_sv"
-//android:layout_width="match_parent"
-//android:layout_height="0dp"
-//android:layout_weight="1" />
+    @Composable
+    fun SurfaceViewWrapper() {
+        AndroidView(
+            factory = { context ->
 
-
-@Composable
-fun SurfaceViewWrapper() {
-    AndroidView(
-        factory = { context ->
-
-            android.view.View.inflate(context, R.layout.surface_view_layout, null)  //XML view is inflated to use inside Compose
+                android.view.View.inflate(
+                    context,
+                    R.layout.surface_view_layout,
+                    null
+                )  //XML view is inflated to use inside Compose
 
 //            val linearLayout = LinearLayout(context).apply {
 //                orientation = LinearLayout.VERTICAL
@@ -604,13 +504,79 @@ fun SurfaceViewWrapper() {
 //            linearLayout.addView(textView)
 //            linearLayout.addView(surfaceView)
 //            linearLayout
-        },
-        modifier = Modifier.fillMaxSize(),
-        update = { surfaceView ->
-            // update your SurfaceView here if necessary
-        }
-    )
+            },
+            modifier = Modifier.fillMaxSize(),
+            update = {
+                // update your SurfaceView here if necessary
+//                Log.d(TAG, "!@# SURFACE VIEW SurfaceViewWrapper: viewParam before set => ${this.surfaceView}")
+                val titleBarHint: TextView = it.findViewById(R.id.tvUserHint)
+                val surfaceView: SurfaceView = it.findViewById(R.id.svSurfaceView)
+                Log.d(TAG, "!@# SURFACE VIEW SurfaceViewWrapper: viewParam set => $surfaceView")
+
+                modelViewer = ModelViewer(surfaceView)
+                doubleTapDetector =
+                    GestureDetector(applicationContext, doubleTapListener)
+
+                modelViewer?.let { modelViewer ->
+                    viewerContent.view = modelViewer.view
+                    viewerContent.sunlight = modelViewer.light
+                    viewerContent.lightManager = modelViewer.engine.lightManager
+                    viewerContent.scene = modelViewer.scene
+                    viewerContent.renderer = modelViewer.renderer
+                    surfaceView.setOnTouchListener { _, motionEvent ->
+                        modelViewer.onTouchEvent(motionEvent)
+                        doubleTapDetector.onTouchEvent(motionEvent)
+                        true
+                    }
+                }
+            }
+        )
+    }
+
+
+//    @Composable
+//    fun SurfaceViewWrapper() {
+//        val context = LocalContext.current
+//        val titleBarHint = remember { mutableStateOf("") }
+//        var surfaceView by remember { mutableStateOf<SurfaceView?>(null) }
+//
+//        AndroidView(factory = { ctx ->
+//            val inflater = LayoutInflater.from(context)
+//            val view = inflater.inflate(R.layout.surface_view_layout, null) as LinearLayout
+//
+//            // get references to the views inside the layout
+//            titleBarHint.value = view.findViewById<TextView>(R.id.tvUserHint).text.toString()
+//            surfaceView = view.findViewById<SurfaceView>(R.id.svSurfaceView)
+//
+//            view
+//        }, update = {
+//            // update your SurfaceView here if necessary
+//        })
+//
+//        // use the titleBarHint and surfaceView variables as needed
+//    }
 }
+//<?xml version="1.0" encoding="utf-8"?>
+//<LindarLayout xmlns:android="http://schemas.android.com/apk/res/android"
+//android:id="@+id/simple_layout"
+//android:layout_width="match_parent"
+//android:layout_height="match_parent"
+//android:orientation="vertical">
+//<TextView
+//android:id="@+id/user_hint"
+//android:layout_width="match_parent"
+//android:layout_height="50dp"
+//android:gravity="center center_horizontal center_vertical"
+//android:text="https://google.github.io/filament/remote"
+//android:textIsSelectable="true"
+//android:textSize="18sp"
+//android:textStyle="bold" />
+//<SurfaceView
+//android:id="@+id/main_sv"
+//android:layout_width="match_parent"
+//android:layout_height="0dp"
+//android:layout_weight="1" />
+
 
 /*@Composable
 fun SurfaceViewWrapper() {
