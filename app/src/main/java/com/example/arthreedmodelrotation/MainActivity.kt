@@ -83,27 +83,6 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     SurfaceViewWrapper()
-//
-//                    Log.d(TAG, "!@# SURFACE VIEW onCreate: $surfaceView")
-//                    modelViewer = ModelViewer(surfaceView)
-//
-////                    titleBarHint = window.findViewById(R.id.tvUserHint)
-////                    surfaceView = window.findViewById(R.id.svSurfaceView)
-//                    doubleTapDetector =
-//                        GestureDetector(applicationContext, doubleTapListener)
-//
-//                    modelViewer?.let { modelViewer ->
-//                        viewerContent.view = modelViewer.view
-//                        viewerContent.sunlight = modelViewer.light
-//                        viewerContent.lightManager = modelViewer.engine.lightManager
-//                        viewerContent.scene = modelViewer.scene
-//                        viewerContent.renderer = modelViewer.renderer
-//                        surfaceView.setOnTouchListener { _, motionEvent ->
-//                            modelViewer.onTouchEvent(motionEvent)
-//                            doubleTapDetector.onTouchEvent(motionEvent)
-//                            true
-//                        }
-//                    }
 
                     createDefaultRenderables()
                     createIndirectLight()
@@ -128,22 +107,22 @@ class MainActivity : ComponentActivity() {
                                 quality = View.QualityLevel.MEDIUM
                             }
                         // MSAA is needed with dynamic resolution MEDIUM
-                        view.multiSampleAntiAliasingOptions =
-                            view.multiSampleAntiAliasingOptions.apply {
+                        view.multiSampleAntiAliasingOptions = view.multiSampleAntiAliasingOptions.apply {
+                            enabled = true
+                        }
 
-                                // FXAA is pretty cheap and helps a lot
-                                view.antiAliasing = View.AntiAliasing.FXAA
-                                // ambient occlusion is the cheapest effect that adds a lot of quality
-                                view.ambientOcclusionOptions =
-                                    view.ambientOcclusionOptions.apply {
-                                        enabled = true
-                                    }
-                                // bloom is pretty expensive but adds a fair amount of realism
-                                view.bloomOptions = view.bloomOptions.apply {
-                                    enabled = true
-                                }
-                                remoteServer = RemoteServer(8082)
-                            }
+                        // FXAA is pretty cheap and helps a lot
+                        view.antiAliasing = View.AntiAliasing.FXAA
+
+                        // ambient occlusion is the cheapest effect that adds a lot of quality
+                        view.ambientOcclusionOptions = view.ambientOcclusionOptions.apply {
+                            enabled = true
+                        }
+
+                        // bloom is pretty expensive but adds a fair amount of realism
+                        view.bloomOptions = view.bloomOptions.apply {
+                            enabled = true
+                        }
                     }
                 }
             }
@@ -152,7 +131,7 @@ class MainActivity : ComponentActivity() {
 
     //Here we'll load GLB/ GLTF model
     private fun createDefaultRenderables() {
-        val buffer = assets.open("models/armchair_leather.glb").use { input ->
+        val buffer = assets.open("models/Avocado.gltf").use { input ->
             val bytes = ByteArray(input.available())
             input.read(bytes)
             ByteBuffer.wrap(bytes)
@@ -256,7 +235,7 @@ class MainActivity : ComponentActivity() {
         }
 
         // Large zip files should first be written to a file to prevent OOM.
-        // 1t is also crucial that we null out the message "buffer” field.
+        // It is also crucial that we null out the message "buffer" field.
         val (zipStream, zipFile) = withContext(Dispatchers.IO) {
             val file = File.createTempFile("incoming", "zip", cacheDir)
             val raf = RandomAccessFile(file, "rw")
@@ -266,7 +245,7 @@ class MainActivity : ComponentActivity() {
             Pair(FileInputStream(file), file)
         }
 
-        // Deflate each resource using the 10 dispatcher, one by one. §
+        // Deflate each resource using the IO dispatcher, one by one.
         var gltfPath: String? = null
         var outOfMemory: String? = null
         val pathToBufferMapping = withContext(Dispatchers.IO) {
@@ -288,7 +267,7 @@ class MainActivity : ComponentActivity() {
                     outOfMemory = uri
                     break
                 }
-                Log.i(TAG, "Deflated ${byteArray?.size} bytes from $uri")
+                Log.i(TAG, "Deflated ${byteArray!!.size} bytes from $uri")
                 val buffer = ByteBuffer.wrap(byteArray)
                 mapping[uri] = buffer
                 if (uri.endsWith(".gltf") || uri.endsWith(".glb")) {
@@ -464,51 +443,10 @@ class MainActivity : ComponentActivity() {
                     R.layout.surface_view_layout,
                     null
                 )  //XML view is inflated to use inside Compose
-
-//            val linearLayout = LinearLayout(context).apply {
-//                orientation = LinearLayout.VERTICAL
-//                layoutParams = ViewGroup.LayoutParams(
-//                    ViewGroup.LayoutParams.MATCH_PARENT,
-//                    ViewGroup.LayoutParams.MATCH_PARENT
-//                )
-//            }
-//
-//            val textView = TextView(context).apply {
-//                id = R.id.user_hint
-//                layoutParams = ViewGroup.LayoutParams(
-//                    ViewGroup.LayoutParams.MATCH_PARENT,
-//                    50
-//                ).apply {
-//                    gravity =
-//                        Gravity.CENTER_HORIZONTAL or Gravity.CENTER_VERTICAL
-//                }
-//                text = "https://google.github.io/filament/remote"
-//                textSize = 18f
-//                setTypeface(null, Typeface.BOLD)
-//                isClickable = true
-//                isFocusable = true
-//            }
-//
-//            val surfaceView =
-//                SurfaceView(context).apply {  //To render a 3D model w have a Surface View
-//                    id = R.id.main_sv
-//                    layoutParams = LinearLayout.LayoutParams(
-//                        ViewGroup.LayoutParams.MATCH_PARENT,
-//                        0
-//                    ).apply {
-//                        weight = 1f
-//                    }
-//                    // setup your SurfaceView here
-//                }
-//
-//            linearLayout.addView(textView)
-//            linearLayout.addView(surfaceView)
-//            linearLayout
             },
             modifier = Modifier.fillMaxSize(),
             update = {
                 // update your SurfaceView here if necessary
-//                Log.d(TAG, "!@# SURFACE VIEW SurfaceViewWrapper: viewParam before set => ${this.surfaceView}")
                 val titleBarHint: TextView = it.findViewById(R.id.tvUserHint)
                 val surfaceView: SurfaceView = it.findViewById(R.id.svSurfaceView)
                 Log.d(TAG, "!@# SURFACE VIEW SurfaceViewWrapper: viewParam set => $surfaceView")
