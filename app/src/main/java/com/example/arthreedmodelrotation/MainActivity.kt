@@ -1,12 +1,21 @@
 package com.example.arthreedmodelrotation
 
 import android.annotation.SuppressLint
+import android.annotation.TargetApi
+import android.content.Intent
 import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.os.PersistableBundle
 import android.util.Log
+import android.view.MotionEvent
+import android.view.OrientationEventListener
+import android.view.View
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -19,16 +28,23 @@ import androidx.compose.ui.graphics.Color
 import com.example.arthreedmodelrotation.ui.theme.ArThreeDModelRotationTheme
 import org.the3deer.android_3d_model_engine.camera.CameraController
 import org.the3deer.android_3d_model_engine.collision.CollisionController
+import org.the3deer.android_3d_model_engine.collision.CollisionEvent
 import org.the3deer.android_3d_model_engine.controller.TouchController
+import org.the3deer.android_3d_model_engine.controller.TouchEvent
+import org.the3deer.android_3d_model_engine.event.SelectedObjectEvent
+import org.the3deer.android_3d_model_engine.model.Projection
+import org.the3deer.android_3d_model_engine.services.LoaderTask
 import org.the3deer.android_3d_model_engine.services.SceneLoader
+import org.the3deer.android_3d_model_engine.view.FPSEvent
 import org.the3deer.android_3d_model_engine.view.ModelSurfaceView
-import org.the3deer.util.android.AssetUtils
+import org.the3deer.android_3d_model_engine.view.ViewEvent
 import org.the3deer.util.android.ContentUtils
+import org.the3deer.util.event.EventListener
 import java.io.IOException
-import java.io.InputStream
 import java.net.URI
+import java.util.EventObject
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), EventListener {
 
     private val REQUEST_CODE_LOAD_TEXTURE = 1000
     private val FULLSCREEN_DELAY = 10000
@@ -36,7 +52,7 @@ class MainActivity : ComponentActivity() {
     /**
      * Type of model if file name has no extension (provided though content provider)
      */
-    private val paramType = 0
+    private var paramType = 0
 
     /**
      * The file to load. Passed as input parameter
@@ -46,25 +62,25 @@ class MainActivity : ComponentActivity() {
     /**
      * Enter into Android Immersive mode so the renderer is full screen or not
      */
-    private val immersiveMode = false
+    private var immersiveMode = false
 
     /**
      * Background GL clear color. Default is light gray
      */
     private val backgroundColor = floatArrayOf(0.0f, 0.0f, 0.0f, 1.0f)
 
-    private val glView: ModelSurfaceView? = null
-    private val touchController: TouchController? = null
-    private val scene: SceneLoader? = null
+    private var glView: ModelSurfaceView? = null
+    private var touchController: TouchController? = null
+    private var scene: SceneLoader? = null
 //    private val gui: ModelViewerGUI? = null
-    private val collisionController: CollisionController? = null
+    private var collisionController: CollisionController? = null
 
 
-    private val handler: Handler? = null
-    private val cameraController: CameraController? = null
+    private var handler: Handler? = null
+    private var cameraController: CameraController? = null
 
-    private val sensorManager: SensorManager? = null
-    private val sensor: Sensor? = null
+    private var sensorManager: SensorManager? = null
+    private var sensor: Sensor? = null
 
     private val REQUEST_CODE_LOAD_MODEL = 1101
     private val REQUEST_CODE_OPEN_MATERIAL = 1102
@@ -98,320 +114,324 @@ class MainActivity : ComponentActivity() {
 //        val baseUrl = "file:///android_asset/models/Avocado.gltf"
         val baseUrl = "android://${packageName}/assets/models/Avocado.gltf"
 
-        /*var inputStream: InputStream? = null
-        try {
-            inputStream = assets.open("models/Avocado.gltf")
-            val size = inputStream.available()
-            val buffer = ByteArray(size)
-            inputStream.read(buffer)
-            val modelString = String(buffer)
+        handler = Handler(mainLooper)
 
-            val filePath = "$baseUrl/$modelString"
-            Log.d("TAG", "!@# loadModelFromAssets: modelString => $modelString, filePath => $filePath")
-        } catch (e: IOException) {
-            e.printStackTrace()
-        } finally {
-            inputStream?.close()
-        }*/
+        // Create our 3D scenario
 
-//.............................................................................. MenuActivity code
-
-        /*if (file != null) {
+        // Create our 3D scenario
+        Log.i("ModelActivity", "Loading Scene...")
+        paramType = -1
+        scene = SceneLoader(this, paramUri, paramType)
+        scene?.addListener(this)
+        if (paramUri == null) {
+            val task: LoaderTask = DemoLoaderTask(this, null, scene)
             ContentUtils.provideAssets(this)
-            launchModelRendererActivity(Uri.parse("android://$packageName/assets/$file"))
-        }*/
-        /*AssetUtils.createChooserDialog(
-            this,
-            "Select file",
-            null,
-            "models",
-            SUPPORTED_FILE_TYPES_REGEX
-        ) { file: String? ->
-            var baseUrl = "file://assets/models/"
+            task.execute()
+        }
 
-            val inputStream : InputStream = assets.open("Avocado.gltf")
-            val size = inputStream.available()
-            val buffer = ByteArray(size)
-            inputStream.read(buffer)
-            val modelString = String(buffer)
 
-            val filePath = "$baseUrl/$modelString"
-            Log.d("TAG", "!@# loadModelFromAssets: modelString => $modelString, filePath => $filePath")
+        /*        Log.i("ModelActivity","Loading Scene...");
+        if (paramUri == null) {
+            scene = new ExampleSceneLoader(this);
+        } else {
+            scene = new SceneLoader(this, paramUri, paramType, gLView);
+        }*/try {
+            Log.i("ModelActivity", "Loading GLSurfaceView...")
+            glView = ModelSurfaceView(this, backgroundColor, scene)
+            glView?.addListener(this)
+            setContentView(glView)
+//            scene.setView(glView);
+        } catch (e: Exception) {
+            Log.e("ModelActivity", e.message, e)
+            Toast.makeText(this, "Error loading OpenGL view: ${e.message}", Toast.LENGTH_LONG)
+                .show()
+        }
 
-            *//*if (file != null) {
-                ContentUtils.provideAssets(this)
-                launchModelRendererActivity(Uri.parse("android://$packageName/assets/$file"))
-            }*//*
-        }*/
+        try {
+            Log.i("ModelActivity", "Loading TouchController...")
+            touchController = TouchController(this)
+            touchController?.addListener(this)
+            //touchController.addListener(glView);
+        } catch (e: java.lang.Exception) {
+            Log.e("ModelActivity", e.message, e)
+            Toast.makeText(this, "Error loading TouchController: ${e.message}", Toast.LENGTH_LONG)
+                .show()
+
+            try {
+                Log.i("ModelActivity", "Loading CollisionController...")
+                collisionController = CollisionController(glView, scene)
+                collisionController?.addListener(this)
+                //touchController.addListener(collisionController);
+                //touchController.addListener(scene);
+            } catch (e: java.lang.Exception) {
+                Log.e("ModelActivity", e.message, e)
+                Toast.makeText(
+                    this,
+                    "Error loading CollisionController: ${e.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+
+            try {
+                Log.i("ModelActivity", "Loading CameraController...")
+                cameraController = CameraController(scene!!.camera)
+                //glView.getModelRenderer().addListener(cameraController);
+                //touchController.addListener(cameraController);
+            } catch (e: java.lang.Exception) {
+                Log.e("ModelActivity", e.message, e)
+                Toast.makeText(
+                    this,
+                    "Error loading CameraController" + e.message,
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+
+            setupOnSystemVisibilityChangeListener()
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                setupOrientationListener()
+            }
+
+            // load model
+            scene?.init()
+
+            Log.i("ModelActivity", "Finished loading")
+
+
+            //...
+        }
     }
 
-//    private fun loadModelFromAssets() {
-//        AssetUtils.createChooserDialog(this, "Select file", null, "models", SUPPORTED_FILE_TYPES_REGEX
-//        ) { file: String? ->
-//            if (file != null) {
-//                ContentUtils.provideAssets(this)
-//                val uri: Uri? = Uri.parse("android://$packageName/assets/$file")
-//                Log.i("Menu", "loadModelFromAssets URI $uri")
-//
-//                val uriIntent = uri.toString()
-//                val immersiveMode = false
-//                val type = loadModelParameters["type"].toString()
-//
-//
-//                // save user selected model
-//                uri?.let { loadModelParameters.put("model", it) }
-//
-//
-//                launchModelRendererActivity(Uri.parse("android://$packageName/assets/$file"))
-//            }
-//        }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (resultCode != RESULT_OK) {
+            return
+        }
+        when (requestCode) {
+            REQUEST_CODE_LOAD_TEXTURE -> {
+                // The URI of the selected file
+                val uri = data?.data
+                if (uri != null) {
+                    Log.i("ModelActivity", "Loading texture '$uri'")
+                    try {
+                        ContentUtils.setThreadActivity(this)
+                        scene!!.loadTexture(null, uri)
+                    } catch (ex: IOException) {
+                        Log.e("ModelActivity", "Error loading texture: " + ex.message, ex)
+                        Toast.makeText(
+                            this, "Error loading texture '$uri'. " + ex
+                                .message, Toast.LENGTH_LONG
+                        ).show()
+                    } finally {
+                        ContentUtils.setThreadActivity(null)
+                    }
+                }
+            }
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle, outPersistentState: PersistableBundle) {
+        outState.putFloatArray("camera.pos", scene?.camera?.pos)
+        outState.putFloatArray("camera.view", scene?.camera?.view)
+        outState.putFloatArray("camera.up", scene?.camera?.up)
+        outState.putString("renderer.projection", glView?.projection?.name)
+        glView?.skyBoxId?.let { outState.putInt("renderer.skybox", it) }
+    }
+
+    override fun onRestoreInstanceState(state: Bundle) {
+        if (state.containsKey("renderer.projection")) {
+            glView!!.projection = Projection.valueOf(state.getString("renderer.projection")!!)
+        }
+        if (state.containsKey("camera.pos") && state.containsKey("camera.view") && state.containsKey(
+                "camera.up"
+            )
+        ) {
+            Log.d("ModelActivity", "onRestoreInstanceState: Restoring camera settings...")
+            scene!!.camera[state.getFloatArray("camera.pos"), state.getFloatArray("camera.view")] =
+                state.getFloatArray("camera.up")
+        }
+        if (state.containsKey("renderer.skybox")) {
+            glView!!.setSkyBox(state.getInt("renderer.skybox"))
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            hideSystemUIDelayed()
+        }
+    }
+
+    private fun setupOrientationListener() {
+        try {
+            //setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
+            //sensor = sensorManager.getDefaultSensor(Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR);
+            sensor = sensorManager?.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR)
+            if (sensor != null) {
+                sensorManager?.registerListener(
+                    object : SensorEventListener {
+                        override fun onSensorChanged(event: SensorEvent) {
+                            /*Log.v("ModelActivity","sensor: "+ Arrays.toString(event.values));
+                                                           Quaternion orientation = new Quaternion(event.values);
+                                                           orientation.normalize();
+                                                           //scene.getSelectedObject().setOrientation(orientation);
+                                                           glView.setOrientation(orientation);*/
+                        }
+
+                        override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
+                    }, sensor,
+                    SensorManager.SENSOR_DELAY_NORMAL, SensorManager.SENSOR_DELAY_UI
+                )
+            }
+            val mOrientationListener: OrientationEventListener = object : OrientationEventListener(
+                applicationContext
+            ) {
+                override fun onOrientationChanged(orientation: Int) {
+                    //scene.onOrientationChanged(orientation);
+                }
+            }
+            if (mOrientationListener.canDetectOrientation()) {
+                mOrientationListener.enable()
+            }
+        } catch (e: java.lang.Exception) {
+            Log.e("ModelActivity", "There is an issue setting up sensors", e)
+        }
+    }
+
+    private fun setupOnSystemVisibilityChangeListener() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+            return
+        }
+        window.decorView.setOnSystemUiVisibilityChangeListener { visibility: Int ->
+            // Note that system bars will only be "visible" if none of the
+            // LOW_PROFILE, HIDE_NAVIGATION, or FULLSCREEN flags are set.
+            if (visibility and View.SYSTEM_UI_FLAG_FULLSCREEN == 0) {
+                // The system bars are visible. Make any desired
+                hideSystemUIDelayed()
+            }
+        }
+    }
+
+    private fun hideSystemUIDelayed() {
+        if (!immersiveMode) {
+            return
+        }
+        handler!!.removeCallbacksAndMessages(null)
+        handler!!.postDelayed(
+            { this.hideSystemUI() },
+            FULLSCREEN_DELAY.toLong()
+        )
+    }
+
+    private fun hideSystemUI() {
+        if (!immersiveMode) {
+            return
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            hideSystemUIKitKat()
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            hideSystemUIJellyBean()
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.KITKAT)
+    private fun hideSystemUIKitKat() {
+        // Set the IMMERSIVE flag.
+        // Set the content to appear under the system bars so that the content
+        // doesn't resize when the system bars hide and show.
+        val decorView = window.decorView
+        decorView.systemUiVisibility =
+            (View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
+                    or View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
+                    or View.SYSTEM_UI_FLAG_IMMERSIVE)
+    }
+
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    private fun hideSystemUIJellyBean() {
+        val decorView = window.decorView
+        decorView.systemUiVisibility =
+            (View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_LOW_PROFILE)
+    }
+
+//    fun DemoLoaderTask(parent: Activity?, uri: URI?, callback: LoadListener?) {
+//        super(parent, uri, callback)
+//        ContentUtils.provideAssets(parent)
 //    }
-//
-//    @Throws(IOException::class)
-//    private fun onLoadModel(uri: Uri) {
-//
-//        // save user selected model
-//        loadModelParameters.put("model", uri)
-//
-//        // detect model type
-//        if (uri.toString().lowercase(Locale.getDefault()).endsWith(".obj")) {
-//            askForRelatedFiles(0)
-//        } else if (uri.toString().lowercase(Locale.getDefault()).endsWith(".stl")) {
-//            askForRelatedFiles(1)
-//        } else if (uri.toString().lowercase(Locale.getDefault()).endsWith(".dae")) {
-//            askForRelatedFiles(2)
-//        }
-//        if (uri.toString().lowercase(Locale.getDefault()).endsWith(".gltf")) {
-//            askForRelatedFiles(3)
-//        } else {
-//            // no model type from filename, ask user...
-//            ContentUtils.showListDialog(
-//                this, "Select type", arrayOf<String>(
-//                    "Wavefront (*.obj)", "Stereolithography (*" +
-//                            ".stl)", "Collada (*.dae)"
-//                )
-//            ) { dialog: DialogInterface?, which: Int ->
-//                try {
-//                    askForRelatedFiles(which)
-//                } catch (e: IOException) {
-//                    e.printStackTrace()
+
+    override fun onEvent(event: EventObject?): Boolean {
+        if (event is FPSEvent) {
+//            gui.onEvent(event)
+        } else if (event is SelectedObjectEvent) {
+//            gui.onEvent(event)
+        } else if (event!!.source is MotionEvent) {
+            // event coming from glview
+            touchController!!.onMotionEvent(event!!.source as MotionEvent)
+        } else if (event is CollisionEvent) {
+            scene!!.onEvent(event)
+        } else if (event is TouchEvent) {
+            if (event.action == TouchEvent.Action.CLICK) {
+                if (!collisionController!!.onEvent(event)) {
+                    scene!!.onEvent(event)
+                }
+            } else {
+                if (scene!!.selectedObject != null) {
+                    scene!!.onEvent(event)
+                } else {
+                    cameraController!!.onEvent(event)
+                    scene!!.onEvent(event)
+                    if (event.action == TouchEvent.Action.PINCH) {
+                        glView!!.onEvent(event)
+                    }
+                }
+            }
+        } else if (event is ViewEvent) {
+            val viewEvent = event
+            if (viewEvent.code == ViewEvent.Code.SURFACE_CHANGED) {
+                cameraController!!.onEvent(viewEvent)
+                touchController!!.onEvent(viewEvent)
+
+                // process event in GUI
+//                if (gui != null) {
+//                    gui.setSize(viewEvent.width, viewEvent.height)
+//                    gui.setVisible(true)
 //                }
-//            }
-//        }
-//    }
-//
-//    @Throws(IOException::class)
-//    private fun askForRelatedFiles(modelType: Int) {
-//        loadModelParameters.put("type", modelType)
-//        when (modelType) {
-//            0 -> {
-//                // check if model references material file
-//                val materialFile = WavefrontLoader.getMaterialLib(getUserSelectedModel())
-//                if (materialFile == null) {
-//                    getUserSelectedModel()?.let { launchModelRendererActivity(it) }
-//                }
-//                ContentUtils.showDialog(
-//                    this, "Select material file", "This model references a " +
-//                            "material file (" + materialFile + "). Please select it", "OK",
-//                    "Cancel"
-//                ) { dialog: DialogInterface?, which: Int ->
-//                    when (which) {
-//                        DialogInterface.BUTTON_NEGATIVE -> getUserSelectedModel()?.let {
-//                            launchModelRendererActivity(
-//                                it
-//                            )
-//                        }
-//
-//                        DialogInterface.BUTTON_POSITIVE -> {
-//                            materialFile?.let { loadModelParameters.put("file", it) }
-//                            askForFile(
-//                                REQUEST_CODE_OPEN_MATERIAL,
-//                                "*/*"
-//                            )
-//                        }
-//                    }
-//                }
-//            }
-//
-//            1 -> getUserSelectedModel()?.let { launchModelRendererActivity(it) }
-//            2 -> {
-//                val images =
-//                    ColladaLoader.getImages(ContentUtils.getInputStream(getUserSelectedModel()))
-//                if (images == null || images.isEmpty()) {
-//                    getUserSelectedModel()?.let { launchModelRendererActivity(it) }
-//                } else {
-//                    Log.i("MenuActivity", "Prompting user to choose files from picker...")
-//                    loadModelParameters.put("files", images)
-//                    val file = images[0]
-//                    ContentUtils.showDialog(
-//                        this, "Select texture", "This model references a " +
-//                                " file (" + file + "). Please select it", "OK",
-//                        "Cancel"
-//                    ) { dialog: DialogInterface?, which: Int ->
-//                        when (which) {
-//                            DialogInterface.BUTTON_NEGATIVE -> getUserSelectedModel()?.let {
-//                                launchModelRendererActivity(it)
-//                            }
-//
-//                            DialogInterface.BUTTON_POSITIVE -> askForFile(
-//                                REQUEST_CODE_ADD_FILES,
-//                                "*/*"
-//                            )
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
-//    private fun getUserSelectedModel(): Uri? {
-//        return loadModelParameters["model"] as Uri?
-//    }
-//
-//    private fun askForFile(requestCode: Int, mimeType: String) {
-//        val target = ContentUtils.createGetContentIntent(mimeType)
-//        val intent = Intent.createChooser(target, "Select file")
-//        try {
-//            startActivityForResult(intent, requestCode)
-//        } catch (e: ActivityNotFoundException) {
-//            Toast.makeText(this, "Error. Please install a file content provider", Toast.LENGTH_LONG)
-//                .show()
-//        }
-//    }
-//
-//    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-//        super.onActivityResult(requestCode, resultCode, data)
-//
-//        ContentUtils.setThreadActivity(this)
-//        try {
-//            when (requestCode) {
-//                REQUEST_CODE_LOAD_MODEL -> {
-//                    if (resultCode != RESULT_OK) {
-//                        return
-//                    }
-//                    val uri = data?.data ?: return
-//                    onLoadModel(uri)
-//                }
-//
-//                REQUEST_CODE_OPEN_MATERIAL -> {
-//                    if (resultCode != RESULT_OK || data?.data == null) {
-//                        getUserSelectedModel()?.let { launchModelRendererActivity(it) }
-//                    }
-//                    val filename = loadModelParameters["file"] as String?
-//                    ContentUtils.addUri(filename, data?.data)
-//                    // check if material references texture file
-//                    val textureFile = WavefrontLoader.getTextureFile(data?.data)
-//                    if (textureFile == null) {
-//                        getUserSelectedModel()?.let { launchModelRendererActivity(it) }
-//                    }
-//                    ContentUtils.showDialog(
-//                        this, "Select texture file", "This model references a " +
-//                                "texture file (" + textureFile + "). Please select it", "OK",
-//                        "Cancel"
-//                    ) { dialog: DialogInterface?, which: Int ->
-//                        when (which) {
-//                            DialogInterface.BUTTON_NEGATIVE -> getUserSelectedModel()?.let {
-//                                launchModelRendererActivity(
-//                                    it
-//                                )
-//                            }
-//
-//                            DialogInterface.BUTTON_POSITIVE -> {
-//                                textureFile?.let {
-//                                    loadModelParameters["file"] = it
-//                                }
-//
-//                                askForFile(
-//                                    REQUEST_CODE_OPEN_TEXTURE,
-//                                    "image/*"
-//                                )
-//                            }
-//                        }
-//                    }
-//                }
-//
-//                REQUEST_CODE_OPEN_TEXTURE -> {
-//                    if (resultCode != RESULT_OK || data?.data == null) {
-//                        getUserSelectedModel()?.let { launchModelRendererActivity(it) }
-//                    }
-//                    val textureFilename = loadModelParameters["file"] as String?
-//                    ContentUtils.addUri(textureFilename, data?.data)
-//                    getUserSelectedModel()?.let { launchModelRendererActivity(it) }
-//                }
-//
-//                REQUEST_CODE_ADD_FILES -> {
-//
-//                    // get list of files to prompt to user
-//                    val files: List<String>? = loadModelParameters["files"] as List<String>?
-//                    val file = mutableListOf(loadModelParameters["files"] as List<String>?)
-//                    if (files.isNullOrEmpty()) {
-//                        getUserSelectedModel()?.let { launchModelRendererActivity(it) }
-//                    }
-//
-//                    // save picked up file
-//                    val current: String? = files?.toMutableList()?.removeAt(0)
-//                    ContentUtils.addUri(current, data?.data)
-//
-//                    // no more files then load model...
-//                    if (files?.isEmpty() == true) {
-//                        getUserSelectedModel()?.let { launchModelRendererActivity(it) }
-//                    }
-//                    val next = files?.get(0)
-//                    ContentUtils.showDialog(
-//                        this, "Select file", "Please select file $next", "OK",
-//                        "Cancel"
-//                    ) { dialog: DialogInterface?, which: Int ->
-//                        when (which) {
-//                            DialogInterface.BUTTON_NEGATIVE -> getUserSelectedModel()?.let {
-//                                launchModelRendererActivity(
-//                                    it
-//                                )
-//                            }
-//
-//                            DialogInterface.BUTTON_POSITIVE -> askForFile(
-//                                REQUEST_CODE_ADD_FILES,
-//                                "image/*"
-//                            )
-//                        }
-//                    }
-//                }
-//            }
-//        } catch (ex: Exception) {
-//            Log.e("MenuActivity", ex.message, ex)
-//            Toast.makeText(this, "Unexpected exception: " + ex.message, Toast.LENGTH_LONG).show()
-//        }
-//    }
-//
-//    private fun launchModelRendererActivity(uri: Uri) {
-//        Log.i("Menu", "Launching renderer for '$uri'")
-//        val intent = Intent(applicationContext, ModelActivity::class.java)
-//        try {
-//            URI.create(uri.toString())
-//            intent.putExtra("uri", uri.toString())
-//        } catch (e: java.lang.Exception) {
-//            // info: filesystem url may contain spaces, therefore we re-encode URI
-//            try {
-//                intent.putExtra(
-//                    "uri",
-//                    URI(uri.scheme, uri.authority, uri.path, uri.query, uri.fragment).toString()
-//                )
-//            } catch (ex: URISyntaxException) {
-//                Toast.makeText(this, "Error: $uri", Toast.LENGTH_LONG).show()
-//                return
-//            }
-//        }
-//        intent.putExtra("immersiveMode", "false")
-//
-//        // content provider case
-//        if (!loadModelParameters.isEmpty()) {
-//            intent.putExtra("type", loadModelParameters["type"].toString())
-//            //intent.putExtra("backgroundColor", "0.25 0.25 0.25 1");
-//            loadModelParameters.clear()
-//        }
-//        startActivity(intent)
-//    }
-//
-//    @Composable
-//    fun ModelActivityScreen() {
-//
-//    }
+            } else if (viewEvent.code == ViewEvent.Code.PROJECTION_CHANGED) {
+                cameraController!!.onEvent(event)
+            }
+        }
+        return true
+    }
+
+    private fun toggleImmersive() {
+        immersiveMode = !immersiveMode
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+            return
+        }
+        if (immersiveMode) {
+            hideSystemUI()
+        } else {
+            showSystemUI()
+        }
+        Toast.makeText(this, "Fullscreen $immersiveMode", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showSystemUI() {
+        handler!!.removeCallbacksAndMessages(null)
+        val decorView = window.decorView
+        decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
+    }
+
+    override fun onBackPressed() {
+        if (immersiveMode) {
+            toggleImmersive()
+        } else {
+            super.onBackPressed()
+        }
+    }
 }
