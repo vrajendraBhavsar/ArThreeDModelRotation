@@ -26,6 +26,8 @@
  */
 package de.javagl.jgltf.model.v2;
 
+import android.util.Log;
+
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -135,6 +137,9 @@ public class GltfModelCreatorV2
         DefaultGltfModel gltfModel = new DefaultGltfModel();
         GltfModelCreatorV2 creator = 
             new GltfModelCreatorV2(gltfAsset, gltfModel);
+        Log.d("TAG", "!@# gltfAsset: "+gltfAsset+", gltfModel:"+gltfModel);
+        Log.d("TAG", "!@# GltfModelV1: gltfAsset "+gltfAsset);
+
         creator.create();
         return gltfModel;
     }
@@ -513,6 +518,7 @@ public class GltfModelCreatorV2
             {
                 accessorModel.setByteStride(byteStride);
             }
+            Log.d("TAG", "!@# accessorModel: "+accessorModel);
             accessorModel.setAccessorData(AccessorDatas.create(accessorModel));
         }
         else
@@ -527,6 +533,7 @@ public class GltfModelCreatorV2
             BufferViewModel bufferViewModel = 
                 createBufferViewModel(uriString, bufferData);
             accessorModel.setBufferViewModel(bufferViewModel);
+            Log.d("TAG", "!@# accessorModel ELSE: "+accessorModel);
             accessorModel.setAccessorData(AccessorDatas.create(accessorModel));
         }
     }
@@ -617,6 +624,7 @@ public class GltfModelCreatorV2
     {
         DefaultBufferModel bufferModel = new DefaultBufferModel();
         bufferModel.setUri(uriString);
+        Log.d("TAG", "!@# DefaultBufferViewModel createBufferViewModel: "+bufferData);
         bufferModel.setBufferData(bufferData);
 
         DefaultBufferViewModel bufferViewModel = 
@@ -821,6 +829,7 @@ public class GltfModelCreatorV2
             transferGltfChildOfRootPropertyElements(buffer, bufferModel);
             if (i == 0 && binaryData != null)
             {
+                Log.d("TAG", "!@# DefaultBufferViewModel initBufferModels: "+binaryData);
                 bufferModel.setBufferData(binaryData);
             }
             else
@@ -830,6 +839,7 @@ public class GltfModelCreatorV2
                 {
                     byte data[] = IO.readDataUri(uri);
                     ByteBuffer bufferData = Buffers.create(data);
+                    Log.d("TAG", "!@# DefaultBufferViewModel IO.isDataUriString(uri): "+bufferData);
                     bufferModel.setBufferData(bufferData);
                 }
                 else
@@ -842,7 +852,9 @@ public class GltfModelCreatorV2
                     }
                     else
                     {
+                        Log.d("TAG", "!@# DefaultBufferViewModel ELSE uri: "+uri);
                         ByteBuffer bufferData = gltfAsset.getReferenceData(uri);
+                        Log.d("TAG", "!@# DefaultBufferViewModel ELSE: "+bufferData);
                         bufferModel.setBufferData(bufferData);
                     }
                 }
@@ -1119,13 +1131,19 @@ public class GltfModelCreatorV2
                 String uri = image.getUri();
                 if (IO.isDataUriString(uri))
                 {
+                    /////////////Fixme: CODE below is not executing, this could be causing the rendering issue
+                    Log.d("TAG", "!@# initImageModels: uri IFF"+uri);
                     byte data[] = IO.readDataUri(uri);
+                    Log.d("TAG", "!@# initImageModels: data IFF"+data);
                     ByteBuffer imageData = Buffers.create(data);
+                    Log.d("TAG", "!@# initImageModels: imageData2 IFF"+imageData);
                     imageModel.setImageData(imageData);
                 }
                 else
                 {
+                    Log.d("TAG", "!@# initImageModels: uri ELSE: "+uri);
                     ByteBuffer imageData = gltfAsset.getReferenceData(uri);
+                    Log.d("TAG", "!@# initImageModels: imageData2 ELSE"+imageData);
                     imageModel.setImageData(imageData);
                 }
             }

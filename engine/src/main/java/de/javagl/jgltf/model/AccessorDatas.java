@@ -25,6 +25,8 @@
  */
 package de.javagl.jgltf.model;
 
+import android.util.Log;
+
 import java.nio.ByteBuffer;
 import java.util.Locale;
 import java.util.logging.Logger;
@@ -56,6 +58,7 @@ public class AccessorDatas
     {
         BufferViewModel bufferViewModel = accessorModel.getBufferViewModel();
         ByteBuffer bufferViewData = bufferViewModel.getBufferViewData();
+        Log.d("TAG", "!@# accessorModel: "+accessorModel+", bufferViewData: "+bufferViewData);
         return create(accessorModel, bufferViewData);
     }
 

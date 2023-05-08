@@ -26,6 +26,8 @@
  */
 package de.javagl.jgltf.model.io.v2;
 
+import android.util.Log;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -181,6 +183,7 @@ public final class GltfAssetV2 implements GltfAsset
     @Override
     public ByteBuffer getReferenceData(String uriString)
     {
+        Log.d("TAG", "!@# getReferenceData: uriString: "+uriString);
         return Buffers.createSlice(referenceDatas.get(uriString));
     }
 

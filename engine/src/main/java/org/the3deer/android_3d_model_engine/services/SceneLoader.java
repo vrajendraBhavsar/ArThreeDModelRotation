@@ -204,6 +204,8 @@ public class SceneLoader implements LoadListener, EventListener {
         float light_distance = Constants.UNIT;
         lightBulb.setLocation(new float[]{light_distance/2,light_distance,0});
         lightBulb.setColor(Constants.COLOR_WHITE);
+
+        init();
     }
 
     public void addListener(EventListener listener){

@@ -26,6 +26,8 @@
  */
 package de.javagl.jgltf.model.impl;
 
+import android.util.Log;
+
 import java.nio.ByteBuffer;
 
 import de.javagl.jgltf.model.BufferModel;

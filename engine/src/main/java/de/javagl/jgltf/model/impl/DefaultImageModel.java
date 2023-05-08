@@ -26,6 +26,8 @@
  */
 package de.javagl.jgltf.model.impl;
 
+import android.util.Log;
+
 import java.nio.ByteBuffer;
 
 import de.javagl.jgltf.model.BufferViewModel;
@@ -93,6 +95,7 @@ public class DefaultImageModel extends AbstractNamedModelElement
      */
     public void setBufferViewModel(BufferViewModel bufferViewModel)
     {
+        Log.d("TAG", "!@# setBufferViewModel: bufferViewModel: "+bufferViewModel);
         this.bufferViewModel = bufferViewModel;
     }
     
@@ -103,6 +106,7 @@ public class DefaultImageModel extends AbstractNamedModelElement
      */
     public void setImageData(ByteBuffer imageData)
     {
+        Log.d("TAG", "!@# setImageData: imageData"+imageData);
         this.imageData = imageData;
     }
     
@@ -127,8 +131,11 @@ public class DefaultImageModel extends AbstractNamedModelElement
     @Override
     public ByteBuffer getImageData()
     {
+        Log.d("TAG", "!@# getImageData: imageData: "+imageData);
+
         if (imageData == null)
         {
+            Log.d("TAG", "!@# getImageData: bufferViewModel: "+bufferViewModel);
             return bufferViewModel.getBufferViewData();
         }
         return Buffers.createSlice(imageData);

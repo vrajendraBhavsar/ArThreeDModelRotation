@@ -26,6 +26,8 @@
  */
 package de.javagl.jgltf.model.v1;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -82,7 +84,9 @@ public final class GltfModelV1 extends DefaultGltfModel implements GltfModel
         this.shaderModels = new ArrayList<DefaultShaderModel>();
         this.programModels = new ArrayList<DefaultProgramModel>();
         this.techniqueModels = new ArrayList<DefaultTechniqueModel>();
-        
+
+        Log.d("TAG", "!@# GltfModelV1: gltfAsset "+gltfAsset);
+
         GltfModelCreatorV1 gltfModelCreatorV1 = 
             new GltfModelCreatorV1(gltfAsset, this);
         gltfModelCreatorV1.create();

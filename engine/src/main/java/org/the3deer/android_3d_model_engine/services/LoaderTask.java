@@ -36,6 +36,7 @@ public abstract class LoaderTask extends AsyncTask<Void, String, List<Object3DDa
      *
 	 */
 	public LoaderTask(Activity parent, URI uri, LoadListener callback) {
+		Log.d("TAG", "!@# LoaderTask:" + uri);
 		this.uri = uri;
 		this.dialog = new ProgressDialog(parent);
 		this.callback = callback; }

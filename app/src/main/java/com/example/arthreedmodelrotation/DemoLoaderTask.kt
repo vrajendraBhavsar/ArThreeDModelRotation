@@ -3,6 +3,7 @@ package com.example.arthreedmodelrotation
 import android.app.Activity
 import android.opengl.GLES20
 import android.util.Log
+import kotlinx.coroutines.NonDisposableHandle.parent
 import org.the3deer.android_3d_model_engine.model.Object3DData
 import org.the3deer.android_3d_model_engine.objects.Cube
 import org.the3deer.android_3d_model_engine.services.LoadListener

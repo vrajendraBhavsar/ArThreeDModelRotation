@@ -12,11 +12,15 @@ import org.the3deer.android_3d_model_engine.model.Object3DData;
 import org.the3deer.android_3d_model_engine.services.LoadListener;
 import org.the3deer.util.android.ContentUtils;
 import org.the3deer.util.android.GLUtil;
+import org.the3deer.util.android.assets.Handler;
 import org.the3deer.util.io.IOUtils;
 import org.the3deer.util.math.Math3DUtils;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URL;
+import java.net.URLStreamHandler;
+import java.net.URLStreamHandlerFactory;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -49,6 +53,16 @@ public final class GltfLoader {
         final List<Object3DData> ret = new ArrayList<>();
         // final List<MeshData> allMeshes = new ArrayList<>();
 
+        /*URL.setURLStreamHandlerFactory(new URLStreamHandlerFactory() {
+            @Override
+            public URLStreamHandler createURLStreamHandler(String protocol) {
+                if ("android".equals(protocol)){
+                    return new Handler();
+                }
+                return null;
+            }
+        });*/
+
         try (InputStream is = ContentUtils.getInputStream(uri)) {
 
             Log.i("Gltfloader", "Loading model file... " + uri);
@@ -59,6 +73,7 @@ public final class GltfLoader {
             GltfAsset gltfAsset = gltfAssetReader.readWithoutReferences(is);
             URI baseUri = IO.getParent(uri);
             GltfReferenceResolver.resolveAll(gltfAsset.getReferences(), baseUri);
+            Log.d("TAG", "!@# load: gltfAsset ==> "+gltfAsset);
             GltfModel gltfModel = GltfModels.create(gltfAsset);
 
             // load scene...
@@ -165,8 +180,8 @@ public final class GltfLoader {
             // map texture
             if (materialModel.getBaseColorTexture() != null) {
                 ByteBuffer imageData = materialModel.getBaseColorTexture().getImageModel().getImageData();
-
                 Log.i("GltfLoader", "Decoding bitmap... " + materialModel.getBaseColorTexture().getName());
+
                 try {
                     Bitmap bitmap = GLUtil.loadBitmap(new ByteBufferInputStream(imageData));
                     material.setColorTexture(bitmap);

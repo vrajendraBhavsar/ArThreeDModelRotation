@@ -1,6 +1,8 @@
 package org.the3deer.android_3d_model_engine.camera;
 
 
+import android.util.Log;
+
 import org.the3deer.android_3d_model_engine.controller.TouchEvent;
 import org.the3deer.android_3d_model_engine.model.Camera;
 import org.the3deer.android_3d_model_engine.model.Constants;
@@ -56,6 +58,7 @@ public final class CameraController implements EventListener {
 
     @Override
     public boolean onEvent(EventObject event) {
+        Log.d("TAG", "!@# onEvent: EventObject::"+event);
         if (event instanceof ViewEvent) {
             final ViewEvent viewEvent = (ViewEvent) event;
             switch (viewEvent.getCode()) {
@@ -81,6 +84,7 @@ public final class CameraController implements EventListener {
                     dx1 = (float) (dx1 / max * Math.PI * 2);
                     dy1 = (float) (dy1 / max * Math.PI * 2);
                     handler.translateCamera(dx1, dy1);
+                    Log.d("TAG", "!@# onEvent: dX ==> "+touchEvent.getdX() +", dY ==> "+touchEvent.getdY());
                     break;
                 case PINCH:
                     final float zoomFactor = ((TouchEvent) event).getZoom();

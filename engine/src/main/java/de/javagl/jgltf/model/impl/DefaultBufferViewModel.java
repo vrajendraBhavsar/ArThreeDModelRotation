@@ -26,6 +26,9 @@
  */
 package de.javagl.jgltf.model.impl;
 
+import android.os.Build;
+import android.util.Log;
+
 import java.nio.ByteBuffer;
 import java.util.function.Consumer;
 
@@ -149,11 +152,14 @@ public final class DefaultBufferViewModel extends AbstractNamedModelElement
     public ByteBuffer getBufferViewData()
     {
         ByteBuffer bufferData = bufferModel.getBufferData();
+        Log.d("TAG", "!@# getBufferViewData: bufferData"+bufferData);
         ByteBuffer bufferViewData = 
             Buffers.createSlice(bufferData, getByteOffset(), getByteLength());
         if (sparseSubstitutionCallback != null && !sparseSubstitutionApplied)
         {
-            sparseSubstitutionCallback.accept(bufferViewData);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                sparseSubstitutionCallback.accept(bufferViewData);
+            }
             sparseSubstitutionApplied = true;
         }
         return bufferViewData;

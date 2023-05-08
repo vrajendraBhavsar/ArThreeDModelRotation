@@ -26,6 +26,8 @@
  */
 package de.javagl.jgltf.model.io;
 
+import android.util.Log;
+
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -74,6 +76,7 @@ public class Buffers
         {
             return null;
         }
+        Log.d("TAG", "!@# createSlice: byteBuffer.order(): "+byteBuffer.order());
         return byteBuffer.slice().order(byteBuffer.order());
     }
     
@@ -197,9 +200,12 @@ public class Buffers
         {
             return ByteBuffer.allocateDirect(0).order(ByteOrder.nativeOrder());
         }
-        int resultCapacity = byteBuffers.stream()
-            .mapToInt(ByteBuffer::capacity)
-            .reduce(0, (a, b) -> a + b);
+        int resultCapacity = 0;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            resultCapacity = byteBuffers.stream()
+                .mapToInt(ByteBuffer::capacity)
+                .reduce(0, (a, b) -> a + b);
+        }
         ByteBuffer newByteBuffer = ByteBuffer
             .allocateDirect(resultCapacity)
             .order(ByteOrder.nativeOrder());

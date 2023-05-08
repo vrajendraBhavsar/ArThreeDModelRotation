@@ -26,6 +26,9 @@
  */
 package de.javagl.jgltf.model.v1;
 
+import android.os.Build;
+import android.util.Log;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -726,6 +729,7 @@ class GltfModelCreatorV1
                         + " buffer ID, but no binary data has been given");
                     continue;
                 }
+                Log.d("TAG", "!@# initBufferModels: IF: "+binaryData);
                 bufferModel.setBufferData(binaryData);
             }
             else
@@ -735,11 +739,13 @@ class GltfModelCreatorV1
                 {
                     byte data[] = IO.readDataUri(uri);
                     ByteBuffer bufferData = Buffers.create(data);
+                    Log.d("TAG", "!@# initBufferModels: if (IO.isDataUriString(uri)): "+binaryData);
                     bufferModel.setBufferData(bufferData);
                 }
                 else
                 {
                     ByteBuffer bufferData = gltfAsset.getReferenceData(uri);
+                    Log.d("TAG", "!@# initBufferModels: ELSE: "+binaryData);
                     bufferModel.setBufferData(bufferData);
                 }
             }
@@ -1181,7 +1187,7 @@ class GltfModelCreatorV1
      * printed. 
      */
     private static void addParameters(Technique technique,
-        DefaultTechniqueModel techniqueModel, 
+        DefaultTechniqueModel techniqueModel,
         Function<? super String, ? extends NodeModel> nodeLookup)
     {
         Map<String, TechniqueParameters> parameters = 
@@ -1205,7 +1211,9 @@ class GltfModelCreatorV1
                 }
                 else
                 {
-                    nodeModel = nodeLookup.apply(nodeId);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        nodeModel = nodeLookup.apply(nodeId);
+                    }
                 }
             }
             
@@ -1449,7 +1457,10 @@ class GltfModelCreatorV1
             logger.severe("No index found for " + name + " ID " + id);
             return null;
         }
-        T element = getter.apply(index);
+        T element = null;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            element = getter.apply(index);
+        }
         return element;
     }
     

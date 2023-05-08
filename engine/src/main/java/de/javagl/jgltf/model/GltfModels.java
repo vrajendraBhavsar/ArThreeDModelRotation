@@ -26,6 +26,8 @@
  */
 package de.javagl.jgltf.model;
 
+import android.util.Log;
+
 import de.javagl.jgltf.model.io.GltfAsset;
 import de.javagl.jgltf.model.io.v1.GltfAssetV1;
 import de.javagl.jgltf.model.io.v2.GltfAssetV2;
@@ -49,12 +51,15 @@ public class GltfModels
     {
         if (gltfAsset instanceof GltfAssetV1)
         {
+            Log.d("TAG", "!@# GltfAssetV1: gltfAsset"+gltfAsset);
             GltfAssetV1 gltfAssetV1 = (GltfAssetV1)gltfAsset;
             return new GltfModelV1(gltfAssetV1);
         }
         if (gltfAsset instanceof GltfAssetV2)
         {
+            Log.d("TAG", "!@# GltfAssetV2: gltfAsset"+gltfAsset);
             GltfAssetV2 gltfAssetV2 = (GltfAssetV2)gltfAsset;
+            Log.d("TAG", "!@# gltfAssetV2: "+gltfAssetV2);
             return GltfModelCreatorV2.create(gltfAssetV2);
         }
         throw new IllegalArgumentException(

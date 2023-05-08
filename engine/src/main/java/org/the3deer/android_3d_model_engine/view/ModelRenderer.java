@@ -331,8 +331,8 @@ public class ModelRenderer implements GLSurfaceView.Renderer {
 
         // init variables having android context
         ContentUtils.setThreadActivity(main.getContext());
-        skyBoxes = new SkyBox[]{SkyBox.getSkyBox1(), SkyBox.getSkyBox2()};
-        skyBoxes3D = new Object3DData[skyBoxes.length];
+//        skyBoxes = new SkyBox[]{SkyBox.getSkyBox1(), SkyBox.getSkyBox2()};
+//        skyBoxes3D = new Object3DData[skyBoxes.length];
         // setup shadow rendering
         if (doShadowing) {
             shadowsRenderer.onSurfaceCreated(unused, config);
@@ -465,8 +465,7 @@ public class ModelRenderer implements GLSurfaceView.Renderer {
                 shadowsRenderer.onPrepareFrame(unused, projectionMatrix, viewMatrix, lightPosInWorldSpace, scene);
             }
 
-            drawSkyBox(viewMatrix, projectionMatrix, cameraPosInWorldSpace, colorMask);
-
+//            drawSkyBox(viewMatrix, projectionMatrix, cameraPosInWorldSpace, colorMask);
 
             if (scene.isDrawLighting()) {
                 if (scene.isRotatingLight()) {
@@ -619,7 +618,8 @@ public class ModelRenderer implements GLSurfaceView.Renderer {
         debugSkeleton = !debugSkeleton;
     }
 
-    private void drawSkyBox(float[] viewMatrix, float[] projectionMatrix, float[] cameraPosInWorldSpace, float[] colorMask) {
+    //FIXME: Responsible for making 3D environment background
+    /*private void drawSkyBox(float[] viewMatrix, float[] projectionMatrix, float[] cameraPosInWorldSpace, float[] colorMask) {
 
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
 
@@ -673,20 +673,20 @@ public class ModelRenderer implements GLSurfaceView.Renderer {
                 basicShader.draw(skyBoxes3D[skyBoxId], projectionMatrixSkyBox, viewMatrix, skyBoxes3D[skyBoxId].getMaterial().getTextureId(), null, null, cameraPosInWorldSpace, skyBoxes3D[skyBoxId].getDrawMode(), skyBoxes3D[skyBoxId].getDrawSize());
 
                 // sensor stuff
-                /*this.orientation.toRotationMatrix(viewMatrixSkyBox);
+                *//*this.orientation.toRotationMatrix(viewMatrixSkyBox);
                 float[] rot = new float[16];
                 Matrix.setRotateM(rot,0,90,1,0,0);
                 float[] mat = new float[16];
                 Matrix.multiplyMM(mat,0,viewMatrixSkyBox,0, rot,0);
                 Renderer basicShader = drawer.getSkyBoxDrawer();
-                basicShader.draw(skyBoxes3D[skyBoxId], projectionMatrixSkyBox, mat, skyBoxes3D[skyBoxId].getMaterial().getTextureId(), null, cameraPosInWorldSpace);*/
+                basicShader.draw(skyBoxes3D[skyBoxId], projectionMatrixSkyBox, mat, skyBoxes3D[skyBoxId].getMaterial().getTextureId(), null, cameraPosInWorldSpace);*//*
             } catch (Throwable ex) {
                 Log.e("ModelRenderer", "Error rendering sky box. " + ex.getMessage(), ex);
                 isDrawSkyBox = false;
             }
             //GLES20.glDepthMask(true);
         }
-    }
+    }*/
 
     private void drawObject(float[] viewMatrix, float[] projectionMatrix, float[] lightPosInWorldSpace, float[] colorMask, float[] cameraPosInWorldSpace, boolean doAnimation, boolean drawLighting, boolean drawWireframe, boolean drawTextures, boolean drawColors, List<Object3DData> objects, int i) {
         Object3DData objData = null;
