@@ -187,7 +187,7 @@ public class TouchController implements EventListener {
 			currentPress1 = motionEvent.getPressure(0);
 			currentPress2 = motionEvent.getPressure(1);
 			rotation = 0;
-			rotation = TouchScreen.getRotation360(motionEvent);
+//			rotation = TouchScreen.getRotation360(motionEvent);
 			currentSquare = TouchScreen.getSquare(motionEvent);
 			if (currentSquare == 1 && previousRotationSquare == 4) {
 				rotation = 0;

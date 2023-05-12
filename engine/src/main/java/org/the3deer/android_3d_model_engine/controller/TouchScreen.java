@@ -13,7 +13,7 @@ class TouchScreen {
 	// we can be in one of these 3 states
 	private static final int NONE = 0;
 	private static final int DRAG = 1;
-	private static final int ZOOM = 2;
+//	private static final int ZOOM = 2;
 	private int mode = NONE;
 	// remember some things for zooming
 	private PointF start = new PointF();
@@ -38,14 +38,14 @@ class TouchScreen {
 			if (oldDist > 10f) {
 				savedMatrix.set(matrix);
 				midPoint(mid, event);
-				mode = ZOOM;
+//				mode = ZOOM;
 			}
 			lastEvent = new float[4];
 			lastEvent[0] = event.getX(0);
 			lastEvent[1] = event.getX(1);
 			lastEvent[2] = event.getY(0);
 			lastEvent[3] = event.getY(1);
-			d = getRotation(event);
+//			d = getRotation(event);
 			break;
 		case MotionEvent.ACTION_UP:
 		case MotionEvent.ACTION_POINTER_UP:
@@ -58,26 +58,27 @@ class TouchScreen {
 				float dx = event.getX() - start.x;
 				float dy = event.getY() - start.y;
 				matrix.postTranslate(dx, dy);
-			} else if (mode == ZOOM) {
-				float newDist = spacing(event);
-				if (newDist > 10f) {
-					matrix.set(savedMatrix);
-					float scale = (newDist / oldDist);
-					matrix.postScale(scale, scale, mid.x, mid.y);
-				}
-				if (lastEvent != null && event.getPointerCount() == 3) {
-					newRot = getRotation(event);
-					float r = newRot - d;
-					float[] values = new float[9];
-					matrix.getValues(values);
-					float tx = values[2];
-					float ty = values[5];
-					float sx = values[0];
-					float xc = (view.getWidth() / 2) * sx;
-					float yc = (view.getHeight() / 2) * sx;
-					matrix.postRotate(r, tx + xc, ty + yc);
-				}
 			}
+//			else if (mode == ZOOM) {
+//				float newDist = spacing(event);
+//				if (newDist > 10f) {
+//					matrix.set(savedMatrix);
+//					float scale = (newDist / oldDist);
+//					matrix.postScale(scale, scale, mid.x, mid.y);
+//				}
+//				if (lastEvent != null && event.getPointerCount() == 3) {
+//					newRot = getRotation(event);
+//					float r = newRot - d;
+//					float[] values = new float[9];
+//					matrix.getValues(values);
+//					float tx = values[2];
+//					float ty = values[5];
+//					float sx = values[0];
+//					float xc = (view.getWidth() / 2) * sx;
+//					float yc = (view.getHeight() / 2) * sx;
+//					matrix.postRotate(r, tx + xc, ty + yc);
+//				}
+//			}
 			break;
 		}
 

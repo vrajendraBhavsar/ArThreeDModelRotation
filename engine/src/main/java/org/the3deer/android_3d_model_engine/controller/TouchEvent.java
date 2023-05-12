@@ -41,7 +41,7 @@ public class TouchEvent extends EventObject {
         this.dY = dY;
         this.x2 = x2;
         this.y2 = y2;
-        this.zoom = zoom;
+        this.zoom = 0f;
         this.angle = angle;
     }
 
@@ -83,7 +83,7 @@ public class TouchEvent extends EventObject {
     }
 
     public float getZoom() {
-        return zoom;
+        return 0f;
     }
 
     public float getAngle() {
