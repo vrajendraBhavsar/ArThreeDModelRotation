@@ -12,15 +12,11 @@ import org.the3deer.android_3d_model_engine.model.Object3DData;
 import org.the3deer.android_3d_model_engine.services.LoadListener;
 import org.the3deer.util.android.ContentUtils;
 import org.the3deer.util.android.GLUtil;
-import org.the3deer.util.android.assets.Handler;
 import org.the3deer.util.io.IOUtils;
 import org.the3deer.util.math.Math3DUtils;
 
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URL;
-import java.net.URLStreamHandler;
-import java.net.URLStreamHandlerFactory;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;

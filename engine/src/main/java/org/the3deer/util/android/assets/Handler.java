@@ -1,5 +1,7 @@
 package org.the3deer.util.android.assets;
 
+import android.util.Log;
+
 import org.the3deer.util.android.AndroidURLConnection;
 
 import java.net.URL;
@@ -13,6 +15,7 @@ public class Handler extends URLStreamHandler {
 
     @Override
     protected URLConnection openConnection(final URL url) {
+        Log.d("TAG", "!@# openConnection HANDLER: "+url);
         return new AndroidURLConnection(url);
     }
 

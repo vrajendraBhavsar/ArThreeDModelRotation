@@ -8,6 +8,8 @@
 
 package de.javagl.jgltf.impl.v1;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -731,6 +733,7 @@ public class GlTF
      * 
      */
     public void setImages(Map<String, Image> images) {
+        Log.d("TAG", "!@# setImages: "+images);
         if (images == null) {
             this.images = images;
             return ;
@@ -746,6 +749,7 @@ public class GlTF
      * 
      */
     public Map<String, Image> getImages() {
+        Log.d("TAG", "!@# getImages: "+images);
         return this.images;
     }
 

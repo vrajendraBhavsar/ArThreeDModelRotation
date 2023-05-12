@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import com.example.arthreedmodelrotation.UrlUtil.BASE_URL_SOFA
 import com.example.arthreedmodelrotation.ui.theme.ArThreeDModelRotationTheme
 import org.the3deer.android_3d_model_engine.camera.CameraController
 import org.the3deer.android_3d_model_engine.collision.CollisionController
@@ -63,13 +64,13 @@ class MainActivity : ComponentActivity(), EventListener {
     /**
      * Background GL clear color. Default is light gray
      */
-    private val backgroundColor = floatArrayOf(0.0f, 0.0f, 0.0f, 1.0f)
+    private val backgroundColor = floatArrayOf(0.0f, 0.0f, 0.0f, 0.0f)
 
     private var glView: ModelSurfaceView? = null
     private var touchController: TouchController? = null
     private var scene: SceneLoader? = null
 
-    private var gui: ModelViewerGUI? = null
+//    private var gui: ModelViewerGUI? = null
     private var collisionController: CollisionController? = null
 
 
@@ -118,12 +119,25 @@ class MainActivity : ComponentActivity(), EventListener {
 
     //to get proper URI format like - android://org.andresoviedo.dddmodel2/assets/models/teapot.obj
     private fun loadModelFromAssets() {
+//        AssetUtils.createChooserDialog(
+//            this,
+//            "Select file",
+//            null,
+//            "models",
+//            SUPPORTED_FILE_TYPES_REGEX
+//        ) { file: String? ->
+//            if (file != null) {
+//                ContentUtils.provideAssets(this)
+//                val uri = Uri.parse("android://$packageName/assets/$file")
+////                launchModelRendererActivity(Uri.parse("android://$packageName/assets/$file"))
+//            }
+//        }
+
+        //....
         val TAG: String = MainActivity::class.java.simpleName
 
-//        val baseUrl = "file:///android_asset/models/Avocado.gltf"
-        val baseUrl = "android://${packageName}/assets/models/Avocado.gltf"
-        val uri = URI(baseUrl)
-        Log.i("ModelActivity", "!@# URI(baseUrl) => ${URI(baseUrl)}")
+        val uri: URI = URI(BASE_URL_SOFA)
+        Log.i("ModelActivity", "!@# URI(baseUrl) => ${URI(BASE_URL_SOFA)}")
         Log.i("ModelActivity", "!@# uri => $uri")
 
 //        paramUri = Uri.parse(URI(baseUrl).toString())
@@ -131,10 +145,10 @@ class MainActivity : ComponentActivity(), EventListener {
         handler = Handler(mainLooper)
 
         // Create our 3D scenario
+        paramType = -1
+
         Log.i("ModelActivity", "Loading Scene...")
         Log.i("ModelActivity", "!@# paramUri => $uri, paramType => $paramType")
-
-        paramType = -1
         scene = SceneLoader(this, uri, paramType)
         scene?.addListener(this)
 
@@ -142,9 +156,9 @@ class MainActivity : ComponentActivity(), EventListener {
         if (uri == null) {
             Log.d("TAG", "!@# loadModelFromAssets: $uri")
             val task: LoaderTask = DemoLoaderTask(this, null, scene)
+            Log.d("TAG", "!@# loadModelFromAssets LoaderTask: $task")
             task.execute()
         }
-
 
         try {
             Log.i("ModelActivity", "!@# Loading GLSurfaceView...")
@@ -201,15 +215,15 @@ class MainActivity : ComponentActivity(), EventListener {
         try {
             // TODO: finish UI implementation
             Log.i("ModelActivity", "!@# Loading GUI...")
-            gui = glView?.let { gui ->
-                scene?.let { scene ->
-                    ModelViewerGUI(gui, scene)
-                }
-            }
-            touchController?.addListener(gui)
-            Log.d(TAG, "!@# onCreate: gui + touchController: $gui")
-            glView?.addListener(gui)
-            scene?.addGUIObject(gui)
+//            gui = glView?.let { gui ->
+//                scene?.let { scene ->
+//                    ModelViewerGUI(gui, scene)
+//                }
+//            }
+//            touchController?.addListener(gui)
+//            Log.d(TAG, "!@# onCreate: gui + touchController: $gui")
+//            glView?.addListener(gui)
+//            scene?.addGUIObject(gui)
         } catch (e: java.lang.Exception) {
             Log.e("ModelActivity", "!@#" + e.message, e)
             Toast.makeText(this, "Error loading GUI" + e.message, Toast.LENGTH_LONG).show()
@@ -380,13 +394,11 @@ class MainActivity : ComponentActivity(), EventListener {
     override fun onEvent(event: EventObject?): Boolean {
         if (event is FPSEvent) {
             Log.d("TAG", "!@# onEvent: FPSEvent ==> $event")
-            gui?.onEvent(event)
+//            gui?.onEvent(event)
         } else if (event is SelectedObjectEvent) {
             Log.d("TAG", "!@# onEvent: SelectedObjectEvent ==> $event")
-            gui?.onEvent(event)
+//            gui?.onEvent(event)
         } else if (event?.source is MotionEvent) {
-            // event coming from glview
-
             // event coming from glview
             Log.d("TAG", "!@# onEvent: MotionEvent ==> $event")
             touchController?.onMotionEvent(event.source as MotionEvent)
@@ -440,11 +452,11 @@ class MainActivity : ComponentActivity(), EventListener {
                 touchController?.onEvent(event)
 
                 // process event in GUI
-                if (gui != null) {
-                    gui?.setSize(event.width, event.height)
-                    Log.d("TAG", "!@# onEvent: gui.setSize) Width ==> " + event.width)
-                    gui?.isVisible = true
-                }
+//                if (gui != null) {
+//                    gui?.setSize(event.width, event.height)
+//                    Log.d("TAG", "!@# onEvent: gui.setSize) Width ==> " + event.width)
+//                    gui?.isVisible = true
+//                }
             } else if (event.code == ViewEvent.Code.PROJECTION_CHANGED) {
                 cameraController?.onEvent(event)
             }
@@ -476,4 +488,17 @@ class MainActivity : ComponentActivity(), EventListener {
             super.onBackPressed()
         }
     }
+
+//    companion object {
+//        //    private val loadModelParameters = HashMap<String, Any>()
+//        const val BASE_URL = "android://com.example.arthreedmodelrotation/assets/models/ship.obj"
+//        //        val baseUrl = "file:///android_asset/models/Avocado.gltf"
+////        val baseUrl = "android://${packageName}/assets/models/Avocado.gltf"
+////        val baseUrl = "android://${packageName}/assets/models/ToyPlane.obj"
+////        val baseUrl = "android://${packageName}/assets/models/lieutenantHead.gltf"
+////          val baseUrl = "android://${packageName}/assets/models/ship.obj"
+////        val baseUrl = "android://${packageName}/assets/models/sketch.gltf"
+////        val baseUrl = "android://${packageName}/assets/models/scene.gltf"
+////        val baseUrl = "android://${packageName}/assets/models/rough_plaster_broken_4k.gltf"
+//    }
 }

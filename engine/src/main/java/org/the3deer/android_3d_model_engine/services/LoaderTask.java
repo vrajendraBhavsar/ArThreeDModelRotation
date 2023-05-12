@@ -58,6 +58,7 @@ public abstract class LoaderTask extends AsyncTask<Void, String, List<Object3DDa
 		try {
 		    callback.onStart();
 			List<Object3DData> data = build();
+			Log.d("TAG", "!@# doInBackground: data::"+data);
             callback.onLoadComplete();
 			return  data;
 		} catch (Exception ex) {

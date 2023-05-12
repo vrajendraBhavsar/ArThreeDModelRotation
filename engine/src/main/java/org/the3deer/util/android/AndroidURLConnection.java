@@ -21,7 +21,9 @@ public class AndroidURLConnection extends URLConnection {
     {
         if (stream == null) {
             try {
+                Log.d("TAG", "!@# connect: "+url.toURI());
                 stream = ContentUtils.getInputStream(url.toURI());
+                Log.d("TAG", "!@# connect: stream:: "+stream);
             } catch (URISyntaxException e) {
                 Log.e("Handler", e.getMessage(), e);
                 throw new IOException("Error opening stream " + url + ". " + e.getMessage());
@@ -32,6 +34,7 @@ public class AndroidURLConnection extends URLConnection {
     @Override
     public InputStream getInputStream() throws IOException {
         connect();
+        Log.d("TAG", "!@# getInputStream: "+stream);
         return stream;
     }
 }

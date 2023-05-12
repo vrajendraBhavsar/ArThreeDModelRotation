@@ -605,6 +605,7 @@ public class ModelRenderer implements GLSurfaceView.Renderer {
         // draw all available objects
         List<Object3DData> objects = scene.getObjects();
         for (int i = 0; i < objects.size(); i++) {
+//            Log.d(TAG, "!@# onDrawFrame: colorMask::"+colorMask);
             drawObject(viewMatrix, projectionMatrix, lightPosInWorldSpace, colorMask, cameraPosInWorldSpace, doAnimation, drawLighting, drawWireframe, drawTextures, drawColors, objects, i);
         }
 
@@ -869,6 +870,8 @@ public class ModelRenderer implements GLSurfaceView.Renderer {
                         Log.d("ModelRenderer", drawerObject.toString());
                         infoLogged.put(objData.getId() + "render", true);
                     }
+
+                    //FIXME: Responsible for drawing 3D object
                     drawerObject.draw(objData, projectionMatrix, viewMatrix,
                             textureId, lightPosInWorldSpace, colorMask, cameraPosInWorldSpace,
                             objData.getDrawMode(), objData.getDrawSize());

@@ -1,5 +1,7 @@
 package org.the3deer.util.android.content;
 
+import android.util.Log;
+
 import org.the3deer.util.android.AndroidURLConnection;
 
 import java.net.URL;

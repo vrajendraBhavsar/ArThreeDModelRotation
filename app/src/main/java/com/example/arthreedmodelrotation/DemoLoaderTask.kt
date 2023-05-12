@@ -38,7 +38,7 @@ class DemoLoaderTask(parent: Activity?, uri: URI?, callback: LoadListener?) :
 
     @Throws(Exception::class)
     override fun build(): List<Object3DData>? {
-
+        Log.d("TAG", "!@# build: called")
         // notify user
         super.publishProgress("Loading demo...")
 

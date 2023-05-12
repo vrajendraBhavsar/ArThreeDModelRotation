@@ -30,6 +30,7 @@ import org.the3deer.util.math.Math3DUtils;
 import org.the3deer.util.math.Quaternion;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -204,8 +205,6 @@ public class SceneLoader implements LoadListener, EventListener {
         float light_distance = Constants.UNIT;
         lightBulb.setLocation(new float[]{light_distance/2,light_distance,0});
         lightBulb.setColor(Constants.COLOR_WHITE);
-
-        init();
     }
 
     public void addListener(EventListener listener){
@@ -727,8 +726,11 @@ public class SceneLoader implements LoadListener, EventListener {
         }
         obj = obj != null ? obj : objects.get(0);
 
+        Log.d("TAG", "!@# loadTexture: "+uri);
+        InputStream textureUri = ContentUtils.getInputStream(uri);
+        Log.d("TAG", "!@# loadTexture texture: "+textureUri);
         // load new texture
-        obj.setTextureData(IOUtils.read(ContentUtils.getInputStream(uri)));
+        obj.setTextureData(IOUtils.read(textureUri));
 
         this.drawTextures = true;
     }
@@ -792,14 +794,14 @@ public class SceneLoader implements LoadListener, EventListener {
                 Log.v("SceneLoader", "Adding collision point " + point);
                 addObject(point);
             }
-                if (selectedObject == objectToSelect) {
-                    Log.v("SceneLoader", "Unselected object " + objectToSelect);
-                    setSelectedObject(null);
-                } else {
-                    Log.i("SceneLoader", "Selected object " + objectToSelect.getId());
-                    Log.d("SceneLoader", "Selected object " + objectToSelect);
-                    setSelectedObject(objectToSelect);
-                }
+            if (selectedObject == objectToSelect) {
+                Log.v("SceneLoader", "Unselected object " + objectToSelect);
+                setSelectedObject(null);
+            } else {
+                Log.i("SceneLoader", "Selected object " + objectToSelect.getId());
+                Log.d("SceneLoader", "Selected object " + objectToSelect);
+                setSelectedObject(objectToSelect);
+            }
 
         }
         return true;

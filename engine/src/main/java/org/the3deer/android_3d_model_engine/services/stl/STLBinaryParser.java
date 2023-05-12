@@ -13,6 +13,8 @@ package org.the3deer.android_3d_model_engine.services.stl;
 
 // External imports
 
+import android.util.Log;
+
 import org.the3deer.util.io.ProgressMonitorInputStream;
 
 import java.io.BufferedInputStream;
@@ -54,6 +56,7 @@ class STLBinaryParser extends STLParser
 
     public STLBinaryParser()
     {
+        Log.d("TAG", "!@# STLBinaryParser called...");
         itsReadBuffer = new byte[48];
         itsDataBuffer = new int[12];
     }
@@ -89,6 +92,7 @@ class STLBinaryParser extends STLParser
         {
             URLConnection connection = url.openConnection();
             stream = connection.getInputStream();
+            Log.d("TAG", "!@# parse stream1: "+stream);
             length = connection.getContentLength();
         }
         catch(IOException e)
@@ -111,6 +115,7 @@ class STLBinaryParser extends STLParser
         {
             URLConnection connection = url.openConnection();
             stream = connection.getInputStream();
+            Log.d("TAG", "!@# parse stream2: "+stream);
             length = connection.getContentLength();
         }
         catch(IOException e)

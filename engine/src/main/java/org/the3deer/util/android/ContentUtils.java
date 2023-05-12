@@ -115,9 +115,18 @@ public class ContentUtils {
      * @throws IOException if there is an error opening stream
      */
     public static InputStream getInputStream(String path) throws IOException {
+        Log.d("TAG", "!@# getInputStream: path"+path);
         Uri uri = getUri(path);
         if (uri == null) {
-            uri = getUri("models/"+path);
+//            uri = getUri("models/"+path);//android://${packageName}/assets/models/ship.mtl
+
+            //FIXME: Have provided static path since in the demo we are dealing with a single model at a time
+            uri = Uri.parse("android://org.andresoviedo.dddmodel2/assets/models/"+path);
+            Log.d("TAG", "!@# getInputStream: uri::"+uri);
+
+//            String baseUrl = "android://org.andresoviedo.dddmodel2/assets/models/ship.mtl";
+//            uri = new URI(baseUrl);
+//            uri = Uri.parse(BASE_URL);
         }
         if (uri == null) {
             uri = getUri("models/"+path.replaceAll("\\\\","/"));
@@ -125,8 +134,11 @@ public class ContentUtils {
         if (uri == null && currentDir != null) {
             uri = Uri.parse("file://" + new File(currentDir, path).getAbsolutePath());
         }
+        Log.d("TAG", "!@# getInputStream(): "+uri);
         if (uri != null) {
-            return getInputStream(uri);
+            InputStream inputStream = getInputStream(uri);
+            Log.d("TAG", "!@# getInputStream() inputStream: "+inputStream);
+            return inputStream;
         }
         Log.e("ContentUtils", "Media not found: " + path);
         Log.d("ContentUtils", "Available media: " + documentsProvided);
@@ -134,6 +146,7 @@ public class ContentUtils {
     }
 
     public static InputStream getInputStream(URI uri) throws IOException {
+        Log.d("TAG", "public static InputStream getInputStream(URI uri) throws IOException {}"+Uri.parse(uri.toURL().toString()));
         return getInputStream(Uri.parse(uri.toURL().toString()));
     }
 
@@ -146,6 +159,7 @@ public class ContentUtils {
             if (uri.getPath().startsWith("/assets/")) {
                 final String path = uri.getPath().substring("/assets/".length());
                 Log.i("ContentUtils", "Opening asset: " + path);
+                Log.i("ContentUtils", "Opening getCurrentActivity().getAssets().open(path): " + getCurrentActivity().getAssets().open(path));
                 return getCurrentActivity().getAssets().open(path);
             } else if (uri.getPath().startsWith("/res/drawable/")){
                 final String path = uri.getPath().substring("/res/drawable/".length()).replace(".png","");
@@ -271,6 +285,7 @@ public class ContentUtils {
         }
         builder.setItems(fileListArray, (DialogInterface dialog, int which) -> {
             documentsProvided.clear();
+            Log.d("TAG", "!@# createChooserDialog: "+fileListAssets);
             for (String asset : fileListAssets) {
                 documentsProvided.put(asset.substring(asset.lastIndexOf("/") + 1), Uri.parse(asset));
             }

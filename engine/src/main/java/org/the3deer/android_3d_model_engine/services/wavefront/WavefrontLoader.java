@@ -176,13 +176,16 @@ public class WavefrontLoader {
         try {
 
             // get materials stream
+            Log.d("TAG", "!@# loadMaterials: "+meshData.getMaterialFile()); //mtl
             final InputStream inputStream = ContentUtils.getInputStream(meshData.getMaterialFile());
+            Log.d("TAG", "!@# loadMaterials: InputStream code is done.");
 
             // parse materials
             final WavefrontMaterialsParser materialsParser = new WavefrontMaterialsParser();
             final Materials materials = materialsParser.parse(meshData.getMaterialFile(), inputStream);
 
             // check if there is any material
+            Log.d("TAG", "!@# loadMaterials: materials.size(): "+materials.size());
             if (materials.size() > 0) {
 
                 // bind materials
@@ -207,12 +210,14 @@ public class WavefrontLoader {
                         element.setMaterial(elementMaterial);
 
                         // check if element has texture mapped
+                        Log.d("TAG", "!@# loadMaterials: elementMaterial.getTextureFile()"+elementMaterial.getTextureFile());
                         if (elementMaterial.getTextureFile() != null) {
 
                             // log event
                             Log.i("WavefrontLoader", "Reading texture file... " + elementMaterial.getTextureFile());
 
                             // read texture data
+                            Log.d("TAG", "!@# loadMaterials read texture data: "+elementMaterial.getTextureFile()); //bmp
                             try (InputStream stream = ContentUtils.getInputStream(elementMaterial.getTextureFile())) {
 
                                 // read data
