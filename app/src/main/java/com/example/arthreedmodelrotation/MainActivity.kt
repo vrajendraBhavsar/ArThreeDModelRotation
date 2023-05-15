@@ -16,10 +16,17 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import com.example.arthreedmodelrotation.UrlUtil.BASE_URL_SOFA
 import com.example.arthreedmodelrotation.ui.theme.ArThreeDModelRotationTheme
 import org.the3deer.android_3d_model_engine.camera.CameraController
@@ -44,7 +51,6 @@ import java.util.EventObject
 class MainActivity : ComponentActivity(), EventListener {
 
     private val REQUEST_CODE_LOAD_TEXTURE = 1000
-    private val FULLSCREEN_DELAY = 10000L
 
     /**
      * Type of model if file name has no extension (provided though content provider)
@@ -57,11 +63,6 @@ class MainActivity : ComponentActivity(), EventListener {
 //    private var paramUri: URI? = null
 
     /**
-     * Enter into Android Immersive mode so the renderer is full screen or not
-     */
-    private var immersiveMode = false
-
-    /**
      * Background GL clear color. Default is light gray
      */
     private val backgroundColor = floatArrayOf(0.0f, 0.0f, 0.0f, 0.0f)
@@ -70,7 +71,7 @@ class MainActivity : ComponentActivity(), EventListener {
     private var touchController: TouchController? = null
     private var scene: SceneLoader? = null
 
-//    private var gui: ModelViewerGUI? = null
+    //    private var gui: ModelViewerGUI? = null
     private var collisionController: CollisionController? = null
 
 
@@ -80,17 +81,9 @@ class MainActivity : ComponentActivity(), EventListener {
     private var sensorManager: SensorManager? = null
     private var sensor: Sensor? = null
 
-//    private val REQUEST_CODE_LOAD_MODEL = 1101
-//    private val REQUEST_CODE_OPEN_MATERIAL = 1102
-//    private val REQUEST_CODE_OPEN_TEXTURE = 1103
-//    private val REQUEST_CODE_ADD_FILES = 1200
-//    private val SUPPORTED_FILE_TYPES_REGEX = "(?i).*\\.(obj|stl|dae|gltf|index)"
-//    private val loadModelParameters = HashMap<String, Any>()
-
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
 
-        // final List<MeshData> allMeshes = new ArrayList<>();
         URL.setURLStreamHandlerFactory { protocol ->
             if ("android" == protocol) {
                 org.the3deer.util.android.assets.Handler()
@@ -105,13 +98,11 @@ class MainActivity : ComponentActivity(), EventListener {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-//                    Box(
-//                        modifier = Modifier
-//                            .fillMaxSize()
-//                            .background(Color.Black)
-//                    ) {
-                    loadModelFromAssets()
-//                    }
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Box(modifier = Modifier.size(30.dp)) {
+                            loadModelFromAssets()
+                        }
+                    }
                 }
             }
         }
@@ -119,36 +110,15 @@ class MainActivity : ComponentActivity(), EventListener {
 
     //to get proper URI format like - android://org.andresoviedo.dddmodel2/assets/models/teapot.obj
     private fun loadModelFromAssets() {
-//        AssetUtils.createChooserDialog(
-//            this,
-//            "Select file",
-//            null,
-//            "models",
-//            SUPPORTED_FILE_TYPES_REGEX
-//        ) { file: String? ->
-//            if (file != null) {
-//                ContentUtils.provideAssets(this)
-//                val uri = Uri.parse("android://$packageName/assets/$file")
-////                launchModelRendererActivity(Uri.parse("android://$packageName/assets/$file"))
-//            }
-//        }
-
-        //....
         val TAG: String = MainActivity::class.java.simpleName
-
-        val uri: URI = URI(BASE_URL_SOFA)
-        Log.i("ModelActivity", "!@# URI(baseUrl) => ${URI(BASE_URL_SOFA)}")
-        Log.i("ModelActivity", "!@# uri => $uri")
-
-//        paramUri = Uri.parse(URI(baseUrl).toString())
-//        paramUri = Uri.parse(baseUrl)
+        val uri = URI(BASE_URL_SOFA)
         handler = Handler(mainLooper)
 
         // Create our 3D scenario
         paramType = -1
+        Log.i("ModelActivity", "!@# paramUri => $uri, paramType => $paramType")
 
         Log.i("ModelActivity", "Loading Scene...")
-        Log.i("ModelActivity", "!@# paramUri => $uri, paramType => $paramType")
         scene = SceneLoader(this, uri, paramType)
         scene?.addListener(this)
 
@@ -163,6 +133,7 @@ class MainActivity : ComponentActivity(), EventListener {
         try {
             Log.i("ModelActivity", "!@# Loading GLSurfaceView...")
             glView = ModelSurfaceView(this, backgroundColor, scene)
+//            glView?.toggleLights()  //To turn OFF the light
             glView?.addListener(this)
             setContentView(glView)
 //            scene.setView(glView);
@@ -228,8 +199,6 @@ class MainActivity : ComponentActivity(), EventListener {
             Log.e("ModelActivity", "!@#" + e.message, e)
             Toast.makeText(this, "Error loading GUI" + e.message, Toast.LENGTH_LONG).show()
         }
-
-        setupOnSystemVisibilityChangeListener()
 
         setupOrientationListener()
 
@@ -298,13 +267,6 @@ class MainActivity : ComponentActivity(), EventListener {
         }
     }
 
-    override fun onWindowFocusChanged(hasFocus: Boolean) {
-        super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) {
-            hideSystemUIDelayed()
-        }
-    }
-
     private fun setupOrientationListener() {
         try {
             //setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -341,55 +303,6 @@ class MainActivity : ComponentActivity(), EventListener {
             Log.e("ModelActivity", "There is an issue setting up sensors", e)
         }
     }
-
-    private fun setupOnSystemVisibilityChangeListener() {
-        window.decorView.setOnSystemUiVisibilityChangeListener { visibility: Int ->
-            // Note that system bars will only be "visible" if none of the
-            // LOW_PROFILE, HIDE_NAVIGATION, or FULLSCREEN flags are set.
-            if (visibility and View.SYSTEM_UI_FLAG_FULLSCREEN == 0) {
-                // The system bars are visible. Make any desired
-                hideSystemUIDelayed()
-            }
-        }
-    }
-
-    private fun hideSystemUIDelayed() {
-        if (!immersiveMode) {
-            return
-        }
-        handler?.removeCallbacksAndMessages(null)
-        handler?.postDelayed(
-            { this.hideSystemUI() },
-            FULLSCREEN_DELAY
-        )
-    }
-
-    private fun hideSystemUI() {
-        if (!immersiveMode) {
-            return
-        }
-        hideSystemUIKitKat()
-    }
-
-    private fun hideSystemUIKitKat() {
-        // Set the IMMERSIVE flag.
-        // Set the content to appear under the system bars so that the content
-        // doesn't resize when the system bars hide and show.
-        val decorView = window.decorView
-        decorView.systemUiVisibility =
-            (View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
-                    or View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
-                    or View.SYSTEM_UI_FLAG_IMMERSIVE)
-    }
-
-//    private fun hideSystemUIJellyBean() {
-//        val decorView = window.decorView
-//        decorView.systemUiVisibility =
-//            (View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-//                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-//                    or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_LOW_PROFILE)
-//    }
 
     override fun onEvent(event: EventObject?): Boolean {
         if (event is FPSEvent) {
@@ -463,42 +376,4 @@ class MainActivity : ComponentActivity(), EventListener {
         }
         return true
     }
-
-    private fun toggleImmersive() {
-        immersiveMode = !immersiveMode
-        if (immersiveMode) {
-            hideSystemUI()
-        } else {
-            showSystemUI()
-        }
-        Toast.makeText(this, "Fullscreen $immersiveMode", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun showSystemUI() {
-        handler?.removeCallbacksAndMessages(null)
-        val decorView = window.decorView
-        decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        if (immersiveMode) {
-            toggleImmersive()
-        } else {
-            super.onBackPressed()
-        }
-    }
-
-//    companion object {
-//        //    private val loadModelParameters = HashMap<String, Any>()
-//        const val BASE_URL = "android://com.example.arthreedmodelrotation/assets/models/ship.obj"
-//        //        val baseUrl = "file:///android_asset/models/Avocado.gltf"
-////        val baseUrl = "android://${packageName}/assets/models/Avocado.gltf"
-////        val baseUrl = "android://${packageName}/assets/models/ToyPlane.obj"
-////        val baseUrl = "android://${packageName}/assets/models/lieutenantHead.gltf"
-////          val baseUrl = "android://${packageName}/assets/models/ship.obj"
-////        val baseUrl = "android://${packageName}/assets/models/sketch.gltf"
-////        val baseUrl = "android://${packageName}/assets/models/scene.gltf"
-////        val baseUrl = "android://${packageName}/assets/models/rough_plaster_broken_4k.gltf"
-//    }
 }

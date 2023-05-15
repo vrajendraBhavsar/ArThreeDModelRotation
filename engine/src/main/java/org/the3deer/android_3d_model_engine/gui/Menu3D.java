@@ -78,11 +78,11 @@ public class Menu3D extends Widget {
         int mark2 = GLYPH_SIZE * 4 * totalGlyphs + GLYPH_SIZE * 4 * idx ;
         getVertexBuffer().position(mark);
         getColorsBuffer().position(mark2);
-        if (states[idx]) {
-            Glyph.build(getVertexBuffer(), getColorsBuffer(), Glyph.CHECKBOX_ON, offsetX, offsetY, 0);
-        } else {
-            Glyph.build(getVertexBuffer(), getColorsBuffer(), Glyph.CHECKBOX_OFF, offsetX, offsetY, 0);
-        }
+//        if (states[idx]) {
+//            Glyph.build(getVertexBuffer(), getColorsBuffer(), Glyph.CHECKBOX_ON, offsetX, offsetY, 0);
+//        } else {
+//            Glyph.build(getVertexBuffer(), getColorsBuffer(), Glyph.CHECKBOX_OFF, offsetX, offsetY, 0);
+//        }
         setVertexBuffer(getVertexBuffer());
     }
 

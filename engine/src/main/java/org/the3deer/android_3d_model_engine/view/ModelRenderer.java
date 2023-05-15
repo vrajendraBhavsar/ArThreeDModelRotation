@@ -465,8 +465,6 @@ public class ModelRenderer implements GLSurfaceView.Renderer {
                 shadowsRenderer.onPrepareFrame(unused, projectionMatrix, viewMatrix, lightPosInWorldSpace, scene);
             }
 
-//            drawSkyBox(viewMatrix, projectionMatrix, cameraPosInWorldSpace, colorMask);
-
             if (scene.isDrawLighting()) {
                 if (scene.isRotatingLight()) {
                     // Draw a point that represents the light bulb
@@ -522,22 +520,6 @@ public class ModelRenderer implements GLSurfaceView.Renderer {
                 anaglyphSwitch = !anaglyphSwitch;
                 return;
             }
-
-            if (scene.isVRGlasses()) {
-
-                // draw left eye image
-                GLES20.glViewport(0, 0, width / 2, height);
-                GLES20.glScissor(0, 0, width / 2, height);
-                this.onDrawFrame(viewMatrixLeft, projectionMatrixLeft,
-                        null);
-
-                // draw right eye image
-                GLES20.glViewport(width / 2, 0, width / 2, height);
-                GLES20.glScissor(width / 2, 0, width / 2, height);
-                this.onDrawFrame(viewMatrixRight, projectionMatrixRight,
-                        null);
-            }
-
 
         } catch (Exception ex) {
             Log.e("ModelRenderer", "Fatal exception: " + ex.getMessage(), ex);
@@ -615,79 +597,8 @@ public class ModelRenderer implements GLSurfaceView.Renderer {
         for (int i = 0; i < guiObjects.size(); i++) {
             drawObject(viewMatrix, projectionMatrix, lightPosInWorldSpace, colorMask, cameraPosInWorldSpace, doAnimation, drawLighting, drawWireframe, drawTextures, drawColors, guiObjects, i);
         }
-
         debugSkeleton = !debugSkeleton;
     }
-
-    //FIXME: Responsible for making 3D environment background
-    /*private void drawSkyBox(float[] viewMatrix, float[] projectionMatrix, float[] cameraPosInWorldSpace, float[] colorMask) {
-
-        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
-
-        GLES20.glDisable(GLES20.GL_CULL_FACE);
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-
-        // draw environment
-        int skyBoxId = getSkyBoxId();
-        if (skyBoxId == -3){
-            GLES20.glClearColor(backgroundColor[0], backgroundColor[1], backgroundColor[2], backgroundColor[3]);
-            // draw all extra objects
-            for (int i = 0; i < extras.size(); i++) {
-                drawObject(viewMatrix, projectionMatrix, lightPosInWorldSpace, colorMask, cameraPosInWorldSpace, false, false, false, false, true, extras, i);
-            }
-        }
-        else if (skyBoxId == -2){
-            GLES20.glClearColor(backgroundColor[0], backgroundColor[1], backgroundColor[2], backgroundColor[3]);
-            // Draw background color
-            GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-        }
-        else if (skyBoxId == -1){
-            // invert background color
-            GLES20.glClearColor(1-backgroundColor[0], 1-backgroundColor[1], 1-backgroundColor[2], 1-backgroundColor[3]);
-            // Draw background color
-            GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-        }
-        else if (isDrawSkyBox && skyBoxId >= 0 && skyBoxId < skyBoxes3D.length) {
-            // GLES20.glDepthMask(false);
-            GLES20.glClearColor(0, 0, 0, 1);
-            try {
-                //skyBoxId = 1;
-                // lazy building of the 3d object
-                if (skyBoxes3D[skyBoxId] == null) {
-                    Log.i("ModelRenderer", "Loading sky box textures to GPU... skybox: " + skyBoxId);
-                    int textureId = GLUtil.loadCubeMap(skyBoxes[skyBoxId].getCubeMap());
-                    Log.d("ModelRenderer", "Loaded textures to GPU... id: " + textureId);
-                    if (textureId != -1) {
-                        skyBoxes3D[skyBoxId] = SkyBox.build(skyBoxes[skyBoxId]);
-                        Rescaler.rescale(skyBoxes3D[skyBoxId], 1f);
-                        final float scale = Constants.SKYBOX_SIZE; //getFar()/skyBoxes3D[skyBoxId].getDimensions().getLargest()/20;
-                        skyBoxes3D[skyBoxId].setScale(scale, scale, scale);
-                        skyBoxes3D[skyBoxId].setColor(Constants.COLOR_BIT_TRANSPARENT);
-                    } else {
-                        Log.e("ModelRenderer", "Error loading sky box textures to GPU. ");
-                        isDrawSkyBox = false;
-                    }
-
-                }
-                Renderer basicShader = drawer.getSkyBoxDrawer();
-                skyBoxes3D[skyBoxId].setColor(Constants.COLOR_BIT_TRANSPARENT);
-                basicShader.draw(skyBoxes3D[skyBoxId], projectionMatrixSkyBox, viewMatrix, skyBoxes3D[skyBoxId].getMaterial().getTextureId(), null, null, cameraPosInWorldSpace, skyBoxes3D[skyBoxId].getDrawMode(), skyBoxes3D[skyBoxId].getDrawSize());
-
-                // sensor stuff
-                *//*this.orientation.toRotationMatrix(viewMatrixSkyBox);
-                float[] rot = new float[16];
-                Matrix.setRotateM(rot,0,90,1,0,0);
-                float[] mat = new float[16];
-                Matrix.multiplyMM(mat,0,viewMatrixSkyBox,0, rot,0);
-                Renderer basicShader = drawer.getSkyBoxDrawer();
-                basicShader.draw(skyBoxes3D[skyBoxId], projectionMatrixSkyBox, mat, skyBoxes3D[skyBoxId].getMaterial().getTextureId(), null, cameraPosInWorldSpace);*//*
-            } catch (Throwable ex) {
-                Log.e("ModelRenderer", "Error rendering sky box. " + ex.getMessage(), ex);
-                isDrawSkyBox = false;
-            }
-            //GLES20.glDepthMask(true);
-        }
-    }*/
 
     private void drawObject(float[] viewMatrix, float[] projectionMatrix, float[] lightPosInWorldSpace, float[] colorMask, float[] cameraPosInWorldSpace, boolean doAnimation, boolean drawLighting, boolean drawWireframe, boolean drawTextures, boolean drawColors, List<Object3DData> objects, int i) {
         Object3DData objData = null;
@@ -702,7 +613,6 @@ public class ModelRenderer implements GLSurfaceView.Renderer {
                 infoLogged.put(objData.getId(), true);
             }
 
-
             Renderer drawerObject = drawer.getDrawer(objData, false, drawTextures, drawLighting, doAnimation, false, false);
             if (drawerObject == null) {
                 if (!infoLogged.containsKey(objData.getId() + "drawer")) {
@@ -715,95 +625,6 @@ public class ModelRenderer implements GLSurfaceView.Renderer {
             boolean changed = objData.isChanged();
             objData.setChanged(false);
 
-            // load textures
-            /*Integer textureId = null;
-            if (drawTextures) {
-
-                // TODO: move texture loading to Renderer
-                if (objData.getElements() != null) {
-
-                    for (int e = 0; e < objData.getElements().size(); e++) {
-
-                        // element
-                        Element element = objData.getElements().get(e);
-
-                        // pre-conditions
-                        if (element.getMaterial() == null) continue;
-
-                        // load normal map
-                        if (element.getMaterial().getNormalTextureId() == -1 &&
-                                element.getMaterial().getNormalTexture() != null){
-
-                            // log event
-                            Log.i("ModelRenderer", "Binding normal map... " + element.getMaterial().getName());
-
-                            // bind bitmap
-                            int handler = GLUtil.loadTexture(element.getMaterial().getNormalTexture());
-
-                            element.getMaterial().setNormalTextureId(handler);
-                        }
-
-                        // load normal map
-                        if (element.getMaterial().getEmissiveTextureId() == -1 &&
-                                element.getMaterial().getEmissiveTexture() != null){
-
-                            // log event
-                            Log.i("ModelRenderer", "Binding normal map... " + element.getMaterial().getName());
-
-                            // bind bitmap
-                            int handler = GLUtil.loadTexture(element.getMaterial().getEmissiveTexture());
-
-                            element.getMaterial().setEmissiveTextureId(handler);
-                        }
-
-                        // check if the texture was already bound
-                        textureId = textures.get(element.getMaterial());
-                        if (textureId != null) continue;
-
-                        if (element.getMaterial().getColorTexture() != null){
-
-                            // log event
-                            Log.i("ModelRenderer", "Binding material... " + element.getMaterial());
-
-                            // bind bitmap
-                            textureId = GLUtil.loadTexture(element.getMaterial().getColorTexture());
-                        }
-                        else if (element.getMaterial().getTextureData() != null){
-
-                            // log event
-                            Log.i("ModelRenderer", "Binding material... " + element.getMaterial());
-
-
-                            // parse bitmap + bind bitmap
-                            textureId = GLUtil.loadTexture(element.getMaterial().getTextureData());
-                        } else {
-                            continue;
-                        }
-
-                        // update material
-                        element.getMaterial().setTextureId(textureId);
-
-                        // cache texture
-                        textures.put(element.getMaterial(), textureId);
-
-                        // log event
-                        Log.i("ModelRenderer", "Material bound... " + textureId);
-                    }
-                } else {
-                    // DEPRECATED
-                    textureId = textures.get(objData.getMaterial());
-                    if (textureId == null && objData.getTextureData() != null) {
-                        Log.i("ModelRenderer", "Loading texture for obj: '" + objData.getId() + "'... bytes: " + objData.getTextureData().length);
-                        ByteArrayInputStream textureIs = new ByteArrayInputStream(objData.getTextureData());
-                        textureId = GLUtil.loadTexture(textureIs);
-                        textureIs.close();
-                        objData.getMaterial().setTextureId(textureId);
-                        textures.put(objData.getMaterial(), textureId);
-
-                        Log.i("ModelRenderer", "Loaded texture OK. id: " + textureId);
-                    }
-                }
-            }*/
             Integer textureId = -1;
 
             // draw points
