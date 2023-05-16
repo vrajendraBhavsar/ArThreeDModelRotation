@@ -52,6 +52,8 @@ public class ModelRenderer implements GLSurfaceView.Renderer {
     // Add 0.5f to the alpha component to the global shader so we can see through the skin
     private static final float[] BLENDING_MASK_FORCED = {1.0f, 1.0f, 1.0f, 0.5f};
 
+    private static final float[] DRAW_LIGHTING_BLENDING_MASK_DEFAULT = {1.0f, 1.0f, 1.0f, 1.0f};
+
     private final float[] backgroundColor;
     private final SceneLoader scene;
 
@@ -144,13 +146,9 @@ public class ModelRenderer implements GLSurfaceView.Renderer {
     private boolean colorsEnabled = true;
     private boolean animationEnabled = true;
 
-    // skybox
-    private boolean isDrawSkyBox = true;
     private int isUseskyBoxId = 0;
     private final float[] projectionMatrixSkyBox = new float[16];
-    private final float[] viewMatrixSkyBox = new float[16];
-    private SkyBox[] skyBoxes = null;
-    private Object3DData[] skyBoxes3D = null;
+
     private Quaternion orientation = new Quaternion(0,0,0,1);
 
     /**
@@ -391,11 +389,14 @@ public class ModelRenderer implements GLSurfaceView.Renderer {
             }
 
             float[] colorMask = BLENDING_MASK_DEFAULT;
+            float[] drawLightingColorMask = DRAW_LIGHTING_BLENDING_MASK_DEFAULT;
             if (scene.isBlendingEnabled()) {
                 // Enable blending for combining colors when there is transparency
+                Log.d(TAG, "!@# onDrawFrame: Blendiong is enabled");
                 GLES20.glEnable(GLES20.GL_BLEND);
                 GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
                 if (scene.isBlendingForced()) {
+                    Log.d(TAG, "!@# onDrawFrame: Blendiong is NOT enabled");
                     colorMask = BLENDING_MASK_FORCED;
                 }
             } else {
@@ -468,7 +469,7 @@ public class ModelRenderer implements GLSurfaceView.Renderer {
             if (scene.isDrawLighting()) {
                 if (scene.isRotatingLight()) {
                     // Draw a point that represents the light bulb
-                    basicShader.draw(scene.getLightBulb(), projectionMatrix, viewMatrix, -1, lightPosInWorldSpace, colorMask, cameraPosInWorldSpace, scene.getLightBulb().getDrawMode(), scene.getLightBulb().getDrawSize());
+                    basicShader.draw(scene.getLightBulb(), projectionMatrix, viewMatrix, -1, lightPosInWorldSpace, drawLightingColorMask, cameraPosInWorldSpace, scene.getLightBulb().getDrawMode(), scene.getLightBulb().getDrawSize());
                     //basicShader.draw(Point.build(lightPosInWorldSpace), projectionMatrix, viewMatrix, -1, lightPosInWorldSpace, colorMask, cameraPosInWorldSpace);
                 }
             }
@@ -556,7 +557,7 @@ public class ModelRenderer implements GLSurfaceView.Renderer {
 
             Renderer basicShader = drawer.getBasicShader();
 
-            /*// Calculate position of the light in world space to support lighting
+            // Calculate position of the light in world space to support lighting
             if (scene.isRotatingLight()) {
                 Matrix.multiplyMV(tempVector4, 0, scene.getLightBulb().getModelMatrix(), 0,
                         Constants.LIGHT_BULB_LOCATION, 0);
@@ -571,7 +572,7 @@ public class ModelRenderer implements GLSurfaceView.Renderer {
                 lightPosInWorldSpace[0] = cameraPosInWorldSpace[0];
                 lightPosInWorldSpace[1] = cameraPosInWorldSpace[1];
                 lightPosInWorldSpace[2] = cameraPosInWorldSpace[2];
-            }*/
+            }
 
             // FIXME: memory leak
             if (scene.isDrawNormals()) {
@@ -588,7 +589,7 @@ public class ModelRenderer implements GLSurfaceView.Renderer {
         List<Object3DData> objects = scene.getObjects();
         for (int i = 0; i < objects.size(); i++) {
 //            Log.d(TAG, "!@# onDrawFrame: colorMask::"+colorMask);
-            drawObject(viewMatrix, projectionMatrix, lightPosInWorldSpace, colorMask, cameraPosInWorldSpace, doAnimation, drawLighting, drawWireframe, drawTextures, drawColors, objects, i);
+            drawObject(viewMatrix, projectionMatrix, lightPosInWorldSpace, colorMask, cameraPosInWorldSpace, doAnimation, drawLighting, drawWireframe, drawTextures, drawColors, objects, i);   //drawLighting = false - will make model look bland (Less detailed)
         }
 
         // draw all GUI objects

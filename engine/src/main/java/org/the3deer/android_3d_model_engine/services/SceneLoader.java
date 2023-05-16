@@ -73,11 +73,11 @@ public class SceneLoader implements LoadListener, EventListener {
     /**
      * List of 3D models
      */
-    private List<Object3DData> objects = new ArrayList<>();
+    private final List<Object3DData> objects = new ArrayList<>();
     /**
      * List of GUI objects
      */
-    private List<Object3DData> guiObjects = new ArrayList<>();
+    private final List<Object3DData> guiObjects = new ArrayList<>();
     /**
      * Point of view camera
      */
@@ -125,12 +125,15 @@ public class SceneLoader implements LoadListener, EventListener {
     private boolean drawColors = true;
     /**
      * Light toggle feature: we have 3 states: no light, light, light + rotation
+     * False -> light
+     * True -> light + rotation
+     * rotatingLight = false && drawLighting = false -> no light
      */
-    private boolean rotatingLight = true;
+    private final boolean rotatingLight = false;
     /**
      * Light toggle feature: whether to draw using lights
      */
-    private boolean drawLighting = true;
+    private final boolean drawLighting = true;
     /**
      * Animate model (dae only) or not
      */
@@ -174,7 +177,7 @@ public class SceneLoader implements LoadListener, EventListener {
     /**
      * Animator
      */
-    private Animator animator = new Animator();
+    private final Animator animator = new Animator();
     /**
      * Did the user touched the model for the first time?
      */
@@ -188,10 +191,10 @@ public class SceneLoader implements LoadListener, EventListener {
      * A cache to save original model dimensions before rescaling them to fit in screen
      * This enables rescaling several times
      */
-    private Map<Object3DData, Dimensions> originalDimensions = new HashMap<>();
-    private Map<Object3DData, Transform> originalTransforms = new HashMap<>();
+    private final Map<Object3DData, Dimensions> originalDimensions = new HashMap<>();
+    private final Map<Object3DData, Transform> originalTransforms = new HashMap<>();
 
-    private List<EventListener> listeners = new ArrayList<>();
+    private final List<EventListener> listeners = new ArrayList<>();
 
     public SceneLoader(Activity main) {
         this(main, null, -1);
@@ -203,11 +206,11 @@ public class SceneLoader implements LoadListener, EventListener {
         this.type = type;
 
         float light_distance = Constants.UNIT;
-        lightBulb.setLocation(new float[]{light_distance/2,light_distance,0});
+        lightBulb.setLocation(new float[]{light_distance / 2, light_distance, 0});
         lightBulb.setColor(Constants.COLOR_WHITE);
     }
 
-    public void addListener(EventListener listener){
+    public void addListener(EventListener listener) {
         this.listeners.add(listener);
     }
 
@@ -239,7 +242,7 @@ public class SceneLoader implements LoadListener, EventListener {
         for (int i = 0; i < objects.size(); i++) {
             final Object3DData objData = objects.get(i);
             if (objData.getAuthoringTool() != null && objData.getAuthoringTool().toLowerCase().contains("blender")) {
-                Quaternion quaternion = Quaternion.getQuaternion(new float[]{1, 0, 0}, (float) (Math.PI/2f));
+                Quaternion quaternion = Quaternion.getQuaternion(new float[]{1, 0, 0}, (float) (Math.PI / 2f));
                 quaternion.normalize();
                 objData.setOrientation(quaternion);
                 Log.i("SceneLoader", "Fixed coordinate system to 90 degrees on x axis. object: " + objData.getId());
@@ -289,7 +292,9 @@ public class SceneLoader implements LoadListener, EventListener {
         if (!rotatingLight) return;
 
         // animate light - Do a complete rotation every 60 seconds.
+//        long time = SystemClock.uptimeMillis() % 60000L;
         long time = SystemClock.uptimeMillis() % 60000L;
+        Log.d("TAG", "!@# animateLight: time" + time);
         float angleInDegrees = (360.0f / 60000.0f) * ((int) time);
         lightBulb.setRotation(new float[]{0, angleInDegrees, 0});
     }
@@ -405,20 +410,20 @@ public class SceneLoader implements LoadListener, EventListener {
         }
     }
 
-    public final void toggleLighting() {
-        if (this.drawLighting && this.rotatingLight) {
-            this.rotatingLight = false;
-            makeToastText("Light stopped", Toast.LENGTH_SHORT);
-        } else if (this.drawLighting && !this.rotatingLight) {
-            this.drawLighting = false;
-            makeToastText("Lights off", Toast.LENGTH_SHORT);
-        } else {
-            this.drawLighting = true;
-            this.rotatingLight = true;
-            makeToastText("Light on", Toast.LENGTH_SHORT);
-        }
-        //requestRender();
-    }
+//    public final void toggleLighting() {
+//        if (this.drawLighting && this.rotatingLight) {
+//            this.rotatingLight = false;
+//            makeToastText("Light stopped", Toast.LENGTH_SHORT);
+//        } else if (this.drawLighting && !this.rotatingLight) {
+//            this.drawLighting = false;
+//            makeToastText("Lights off", Toast.LENGTH_SHORT);
+//        } else {
+//            this.drawLighting = true;
+//            this.rotatingLight = true;
+//            makeToastText("Light on", Toast.LENGTH_SHORT);
+//        }
+//        //requestRender();
+//    }
 
     public final void toggleAnimation() {
         //showAnimationsDialog();
@@ -661,12 +666,12 @@ public class SceneLoader implements LoadListener, EventListener {
         //rescale(this.getObjects(), DEFAULT_MAX_MODEL_SIZE, new float[3]);
         //if (this.getObjects().stream().filter(obj->obj.isPinned()).count() == 1){
         final List<Object3DData> list = new ArrayList<>();
-        for (int i=0; i<getObjects().size(); i++){
+        for (int i = 0; i < getObjects().size(); i++) {
             if (getObjects().get(i).isPinned()) continue;
             list.add(getObjects().get(i));
         }
-        if (list.size() == 1){
-            for (int i=0; i<getObjects().size(); i++){
+        if (list.size() == 1) {
+            for (int i = 0; i < getObjects().size(); i++) {
                 if (getObjects().get(i).isPinned()) continue;
                 getObjects().get(i).setCentered(true);
             }
@@ -726,9 +731,9 @@ public class SceneLoader implements LoadListener, EventListener {
         }
         obj = obj != null ? obj : objects.get(0);
 
-        Log.d("TAG", "!@# loadTexture: "+uri);
+        Log.d("TAG", "!@# loadTexture: " + uri);
         InputStream textureUri = ContentUtils.getInputStream(uri);
-        Log.d("TAG", "!@# loadTexture texture: "+textureUri);
+        Log.d("TAG", "!@# loadTexture texture: " + textureUri);
         // load new texture
         obj.setTextureData(IOUtils.read(textureUri));
 
@@ -759,21 +764,20 @@ public class SceneLoader implements LoadListener, EventListener {
                 Quaternion q0 = Quaternion.getQuaternion(pos, angle * factor);
                 //q0.normalize();
 
-                Quaternion multiply = Quaternion.multiply(selectedObject.getOrientation(),q0);
+                Quaternion multiply = Quaternion.multiply(selectedObject.getOrientation(), q0);
                 selectedObject.setOrientation(multiply);
-            }
-            else if (touch.getAction() == TouchEvent.Action.MOVE && selectedObject != null) {
+            } else if (touch.getAction() == TouchEvent.Action.MOVE && selectedObject != null) {
 
                 float angle = (float) (Math.atan2(-touch.getdY(), touch.getdX()));
                 Log.v("SceneLoader", "Rotating (axis:var): " + Math.toDegrees(angle) + " ,dx:" + touch.getdX() + ", dy:" + -touch.getdY());
 
                 float[] rightd = Math3DUtils.multiply(right, touch.getdY());
                 float[] upd = Math3DUtils.multiply(up, touch.getdX());
-                float[] rot = Math3DUtils.add(rightd,upd);
-                if (Math3DUtils.length(rot)>0) {
+                float[] rot = Math3DUtils.add(rightd, upd);
+                if (Math3DUtils.length(rot) > 0) {
                     Math3DUtils.normalize(rot);
                 } else {
-                    rot = new float[]{1,0,0};
+                    rot = new float[]{1, 0, 0};
                 }
 
                 float angle1 = -touch.getLength() / 360;
@@ -829,7 +833,6 @@ public class SceneLoader implements LoadListener, EventListener {
         Log.v("SceneLoader", "Model[0] dimension: " + currentDimensions.toString());
 
         final float[] corner01 = currentDimensions.getCornerLeftTopNearVector();
-        ;
         final float[] corner02 = currentDimensions.getCornerRightBottomFar();
         final float[] center01 = currentDimensions.getCenter();
 
@@ -903,7 +906,7 @@ public class SceneLoader implements LoadListener, EventListener {
         final float[] finalScale = new float[]{scaleFactor, scaleFactor, scaleFactor};
         Log.d("SceneLoader", "New scale: " + scaleFactor);
 
-        if (scaleFactor > 0.5f && scaleFactor < 1.5f){
+        if (scaleFactor > 0.5f && scaleFactor < 1.5f) {
             return;
         }
 
@@ -952,10 +955,10 @@ public class SceneLoader implements LoadListener, EventListener {
         }
 
 
-        /*for (Object3DData data : datas){
-            if (data instanceof AnimatedModel && ((AnimatedModel)data).getRootJoint() != null){
-                ((AnimatedModel) data).getRootJoint().setLocation(globalDifference);
-                ((AnimatedModel) data).getRootJoint().setScale(finalScale);
+        for (Object3DData data : datas) {
+            if (data instanceof AnimatedModel && ((AnimatedModel) data).getRootJoint() != null) {
+//                ((AnimatedModel) data).getRootJoint().setLocation(globalDifference);
+//                ((AnimatedModel) data).getRootJoint().setScale(finalScale);
                 //data.setScale(null);
                 //data.setPosition(null);
             } else {
@@ -967,15 +970,15 @@ public class SceneLoader implements LoadListener, EventListener {
                 data.setScale(new float[]{localScaleX, localScaleY, localScaleZ});
 
                 // relocate
-                float localTranlactionX = data.getLocation()[0] * scaleFactor;
-                float localTranlactionY = data.getLocation()[1] * scaleFactor;
-                float localTranlactionZ = data.getLocation()[2] * scaleFactor;
-                data.setLocation(new float[]{localTranlactionX, localTranlactionY, localTranlactionZ});
+//                float localTranlactionX = data.getLocation()[0] * scaleFactor;
+//                float localTranlactionY = data.getLocation()[1] * scaleFactor;
+//                float localTranlactionZ = data.getLocation()[2] * scaleFactor;
+//                data.setLocation(new float[]{localTranlactionX, localTranlactionY, localTranlactionZ});
 
                 // center
                 data.translate(globalDifference);
             }
-        }*/
+        }
     }
 
 
@@ -987,7 +990,7 @@ public class SceneLoader implements LoadListener, EventListener {
                 } else {
                     Log.v("ModelActivity","onOrientationChanged: orientation: "+orientation);
                 }*/
-        Log.v("SceneLoader","onOrientationChanged: orientation: "+orientation);
+        Log.v("SceneLoader", "onOrientationChanged: orientation: " + orientation);
         camera.setOrientation(orientation);
     }
 

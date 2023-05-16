@@ -14,7 +14,7 @@ import java.util.EventObject;
 
 public final class CameraController implements EventListener {
 
-    private final Camera handlerDefault ;
+    private final Camera handlerDefault;
     private final Camera handlerIsometric;
     private final Camera handlerOrtho;
     private final Camera handlerPOV;
@@ -50,7 +50,7 @@ public final class CameraController implements EventListener {
                 this.handler = handlerPOV;
                 break;
             default:
-                throw new UnsupportedOperationException("Unsupported projection: "+projection);
+                throw new UnsupportedOperationException("Unsupported projection: " + projection);
         }
         this.camera.setDelegate(this.handler);
         this.handler.enable();
@@ -58,7 +58,7 @@ public final class CameraController implements EventListener {
 
     @Override
     public boolean onEvent(EventObject event) {
-        Log.d("TAG", "!@# onEvent: EventObject::"+event);
+        Log.d("TAG", "!@# onEvent: EventObject::" + event);
         if (event instanceof ViewEvent) {
             final ViewEvent viewEvent = (ViewEvent) event;
             switch (viewEvent.getCode()) {
@@ -85,15 +85,15 @@ public final class CameraController implements EventListener {
                     dx1 = (float) (dx1 / max * Math.PI * 2);
                     dy1 = (float) (dy1 / max * Math.PI * 2);
                     handler.translateCamera(dx1, dy1);
-                    Log.d("TAG", "!@# onEvent: dX ==> "+touchEvent.getdX() +", dY ==> "+touchEvent.getdY());
+                    Log.d("TAG", "!@# onEvent: dX ==> " + touchEvent.getdX() + ", dY ==> " + touchEvent.getdY());
                     break;
                 case PINCH:
                     final float zoomFactor = ((TouchEvent) event).getZoom();
                     handler.MoveCameraZ((float) (-zoomFactor * Constants.near * Math.log(camera.getDistance())));
                     break;
                 case ROTATE:
-                    float rotation = touchEvent.getAngle();
-                    handler.Rotate(rotation);
+//                    float rotation = touchEvent.getAngle();
+//                    handler.Rotate(rotation);
                     break;
                 case SPREAD:
                     // TODO:

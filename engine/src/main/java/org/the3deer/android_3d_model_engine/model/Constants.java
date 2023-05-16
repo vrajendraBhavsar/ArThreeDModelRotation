@@ -4,7 +4,7 @@ public class Constants {
     /**
      * Default unit factor for dimension on any axis
      */
-    public static final float UNIT = 1 * 100f;
+    public static final float UNIT = 1 * 7f;    //1 * 100f  -
     /**
      * Perspective camera. Near clipping panel
      */
@@ -35,7 +35,7 @@ public class Constants {
      * then we use this threshold to test if should
      */
     public static final float SNAP_TO_GRID_THRESHOLD = 0.015f;
-    public static final float UNIT_SIN_1 = (float)Math.sqrt(1f/3f); // 0.58f
+    public static final float UNIT_SIN_1 = (float) Math.sqrt(1f / 3f); // 0.58f
     public static final float UNIT_SIN_2 = UNIT_SIN_1 + UNIT_SIN_1;
     public static final float UNIT_SIN_3 = UNIT_SIN_2 * UNIT_SIN_1;
     public static final float UNIT_SIN_5 = UNIT_SIN_3 * UNIT_SIN_2;
@@ -50,12 +50,12 @@ public class Constants {
     public static final float GRID_SIZE = 0.1f;
     public static final float[] GRID_COLOR = {0.25f, 0.25f, 0.25f, 0.5f};
 
-    public static final float[] COLOR_RED = {1,0,0,1};
-    public static final float[] COLOR_RED_TRANSLUCENT = {1,0,0,0.25f};
-    public static final float[] COLOR_GREEN = {0,1,0,1};
-    public static final float[] COLOR_GREEN_TRANSLUCENT = {0,1,0,0.25f};
-    public static final float[] COLOR_BLUE = {0,0,1,1f};
-    public static final float[] COLOR_BLUE_TRANSLUCENT = {0,0,1,0.25f};
+    public static final float[] COLOR_RED = {1, 0, 0, 1};
+    public static final float[] COLOR_RED_TRANSLUCENT = {1, 0, 0, 0.25f};
+    public static final float[] COLOR_GREEN = {0, 1, 0, 1};
+    public static final float[] COLOR_GREEN_TRANSLUCENT = {0, 1, 0, 0.25f};
+    public static final float[] COLOR_BLUE = {0, 0, 1, 1f};
+    public static final float[] COLOR_BLUE_TRANSLUCENT = {0, 0, 1, 0.25f};
 
     public static final float[] COLOR_WHITE = {1, 1, 1, 1};
     public static final float[] COLOR_BLACK = {0, 0, 0, 1};

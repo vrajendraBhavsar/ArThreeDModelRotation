@@ -2,6 +2,7 @@ package com.example.arthreedmodelrotation
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.graphics.PixelFormat
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -12,21 +13,29 @@ import android.os.PersistableBundle
 import android.util.Log
 import android.view.MotionEvent
 import android.view.OrientationEventListener
-import android.view.View
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import com.example.arthreedmodelrotation.UrlUtil.BASE_URL_SOFA
 import com.example.arthreedmodelrotation.ui.theme.ArThreeDModelRotationTheme
 import org.the3deer.android_3d_model_engine.camera.CameraController
@@ -47,6 +56,7 @@ import java.io.IOException
 import java.net.URI
 import java.net.URL
 import java.util.EventObject
+
 
 class MainActivity : ComponentActivity(), EventListener {
 
@@ -99,8 +109,15 @@ class MainActivity : ComponentActivity(), EventListener {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Column(modifier = Modifier.fillMaxSize()) {
-                        Box(modifier = Modifier.size(30.dp)) {
+                        Box(modifier = Modifier.fillMaxWidth()) {
                             loadModelFromAssets()
+                        }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color.Red)
+                        ) {
+                            Text(text = "Shalalala")
                         }
                     }
                 }
@@ -109,7 +126,8 @@ class MainActivity : ComponentActivity(), EventListener {
     }
 
     //to get proper URI format like - android://org.andresoviedo.dddmodel2/assets/models/teapot.obj
-    private fun loadModelFromAssets() {
+    @Composable
+    private fun BoxScope.loadModelFromAssets() {
         val TAG: String = MainActivity::class.java.simpleName
         val uri = URI(BASE_URL_SOFA)
         handler = Handler(mainLooper)
@@ -119,51 +137,103 @@ class MainActivity : ComponentActivity(), EventListener {
         Log.i("ModelActivity", "!@# paramUri => $uri, paramType => $paramType")
 
         Log.i("ModelActivity", "Loading Scene...")
-        scene = SceneLoader(this, uri, paramType)
-        scene?.addListener(this)
+        scene = SceneLoader(this@MainActivity, uri, paramType)
+        scene?.addListener(this@MainActivity)
 
         //FIXME: This "if" condition is simply to render default UI in case of uri failure
         if (uri == null) {
             Log.d("TAG", "!@# loadModelFromAssets: $uri")
-            val task: LoaderTask = DemoLoaderTask(this, null, scene)
+            val task: LoaderTask = DemoLoaderTask(this@MainActivity, null, scene)
             Log.d("TAG", "!@# loadModelFromAssets LoaderTask: $task")
             task.execute()
         }
 
+        val isLoading = remember { mutableStateOf(true) }
+        val errorMessage = remember { mutableStateOf("") }
+
+//        LaunchedEffect(key1 = Unit) {
         try {
+            Log.i("ModelActivity", "!@# Loading GLSurfaceView...")
+            glView = ModelSurfaceView(this@MainActivity, backgroundColor, scene)
+            glView?.addListener(this@MainActivity)
+            isLoading.value = false
+        } catch (e: Exception) {
+            Log.e("ModelActivity", "!@# " + e.message, e)
+            errorMessage.value = "Error loading OpenGL view: ${e.message}"
+            isLoading.value = false
+        }
+//        }
+
+        if (isLoading.value) {
+            // Show loading indicator or placeholder content
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+        } else {
+            if (errorMessage.value.isNotEmpty()) {
+                // Show error message
+                Toast.makeText(this@MainActivity, errorMessage.value, Toast.LENGTH_LONG).show()
+            } else {
+                // Show the GLSurfaceView
+                AndroidView(
+                    factory = { context ->
+                        glView?.setZOrderOnTop(true)
+                        glView?.holder?.setFormat(PixelFormat.TRANSLUCENT)
+                        glView!!
+                    },
+                    modifier = Modifier
+                        .size(width = 400.dp, height = 500.dp)
+                        .focusable(true),
+                    update = {
+                        glView?.addListener(this@MainActivity)
+                    }
+                )
+            }
+        }
+
+        /*try {
             Log.i("ModelActivity", "!@# Loading GLSurfaceView...")
             glView = ModelSurfaceView(this, backgroundColor, scene)
 //            glView?.toggleLights()  //To turn OFF the light
             glView?.addListener(this)
-            setContentView(glView)
+//            setContentView(glView)
+
+            AndroidView(factory = { context ->
+                glView?.setZOrderOnTop(true)
+                glView?.holder?.setFormat(PixelFormat.TRANSLUCENT)
+                glView!!
+            })
+
 //            scene.setView(glView);
         } catch (e: Exception) {
             Log.e("ModelActivity", "!@# " + e.message, e)
             Toast.makeText(this, "Error loading OpenGL view: ${e.message}", Toast.LENGTH_LONG)
                 .show()
-        }
+        }*/
 
         try {
             Log.i("ModelActivity", "!@# Loading TouchController...")
-            touchController = TouchController(this)
-            touchController?.addListener(this)
+            touchController = TouchController(this@MainActivity)
+            touchController?.addListener(this@MainActivity)
             Log.d(TAG, "!@# onCreate: touchController init")
 //            touchController?.addListener(glView);
         } catch (e: java.lang.Exception) {
             Log.e("ModelActivity", "!@#" + e.message, e)
-            Toast.makeText(this, "Error loading TouchController: ${e.message}", Toast.LENGTH_LONG)
+            Toast.makeText(
+                this@MainActivity,
+                "Error loading TouchController: ${e.message}",
+                Toast.LENGTH_LONG
+            )
                 .show()
         }
         try {
             Log.i("ModelActivity", "!@# Loading CollisionController...")
             collisionController = CollisionController(glView, scene)
-            collisionController?.addListener(this)
+            collisionController?.addListener(this@MainActivity)
             //touchController.addListener(collisionController);
             //touchController.addListener(scene);
         } catch (e: java.lang.Exception) {
             Log.e("ModelActivity", "!@#" + e.message, e)
             Toast.makeText(
-                this,
+                this@MainActivity,
                 "Error loading CollisionController: ${e.message}",
                 Toast.LENGTH_LONG
             ).show()
@@ -179,8 +249,11 @@ class MainActivity : ComponentActivity(), EventListener {
             //touchController.addListener(cameraController);
         } catch (e: java.lang.Exception) {
             Log.e("ModelActivity", "!@# Loading CameraController..." + e.message, e)
-            Toast.makeText(this, "Error loading CameraController" + e.message, Toast.LENGTH_LONG)
-                .show()
+            Toast.makeText(
+                this@MainActivity,
+                "Error loading CameraController" + e.message,
+                Toast.LENGTH_LONG
+            ).show()
         }
 
         try {
@@ -197,7 +270,8 @@ class MainActivity : ComponentActivity(), EventListener {
 //            scene?.addGUIObject(gui)
         } catch (e: java.lang.Exception) {
             Log.e("ModelActivity", "!@#" + e.message, e)
-            Toast.makeText(this, "Error loading GUI" + e.message, Toast.LENGTH_LONG).show()
+            Toast.makeText(this@MainActivity, "Error loading GUI" + e.message, Toast.LENGTH_LONG)
+                .show()
         }
 
         setupOrientationListener()
@@ -262,9 +336,9 @@ class MainActivity : ComponentActivity(), EventListener {
                 state.getFloatArray("camera.up")
             )
         }
-        if (state.containsKey("renderer.skybox")) {
-            glView?.setSkyBox(state.getInt("renderer.skybox"))
-        }
+//        if (state.containsKey("renderer.skybox")) {
+//            glView?.setSkyBox(state.getInt("renderer.skybox"))
+//        }
     }
 
     private fun setupOrientationListener() {
