@@ -6,6 +6,7 @@ import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.os.SystemClock;
 import android.util.Log;
+import android.view.SurfaceHolder;
 
 import org.the3deer.android_3d_model_engine.animation.Animator;
 import org.the3deer.android_3d_model_engine.drawer.Renderer;
@@ -36,6 +37,7 @@ import org.the3deer.util.math.Quaternion;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -172,6 +174,7 @@ public class ModelRenderer implements GLSurfaceView.Renderer {
      * Did the application explode?
      */
     private boolean fatalException = false;
+    private float[] modelColor = {1.0f, 0.0f, 0.0f, 1.0f}; // Initial model color
 
     // shadowing
     private boolean doShadowing = false;
@@ -186,6 +189,7 @@ public class ModelRenderer implements GLSurfaceView.Renderer {
      */
     public ModelRenderer(Activity parent, ModelSurfaceView modelSurfaceView,
                          float[] backgroundColor, SceneLoader scene) throws IOException, IllegalAccessException {
+        Log.d(TAG, "!@# ModelRenderer: called, backgroundColor ==> "+ Arrays.toString(backgroundColor));
         this.main = modelSurfaceView;
         this.backgroundColor = backgroundColor;
         this.scene = scene;
@@ -342,6 +346,8 @@ public class ModelRenderer implements GLSurfaceView.Renderer {
         this.width = width;
         this.height = height;
 
+        Log.d(TAG, "!@# onSurfaceChanged: width ==> "+width);
+
         // Adjust the viewport based on geometry changes, such as screen rotation
         GLES20.glViewport(0, 0, width, height);
 
@@ -374,6 +380,11 @@ public class ModelRenderer implements GLSurfaceView.Renderer {
             GLES20.glColorMask(true, true, true, true);
             GLES20.glLineWidth((float) Math.PI);
 
+            // Clear the screen
+            unused.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
+            // Set the model color
+            unused.glColor4f(modelColor[0], modelColor[1], modelColor[2], modelColor[3]);
+
             if (scene == null) {
                 // scene not ready
                 return;
@@ -392,11 +403,11 @@ public class ModelRenderer implements GLSurfaceView.Renderer {
             float[] drawLightingColorMask = DRAW_LIGHTING_BLENDING_MASK_DEFAULT;
             if (scene.isBlendingEnabled()) {
                 // Enable blending for combining colors when there is transparency
-                Log.d(TAG, "!@# onDrawFrame: Blendiong is enabled");
+//                Log.d(TAG, "!@# onDrawFrame: Blendiong is enabled");
                 GLES20.glEnable(GLES20.GL_BLEND);
                 GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
                 if (scene.isBlendingForced()) {
-                    Log.d(TAG, "!@# onDrawFrame: Blendiong is NOT enabled");
+//                    Log.d(TAG, "!@# onDrawFrame: Blendiong is NOT enabled");
                     colorMask = BLENDING_MASK_FORCED;
                 }
             } else {

@@ -442,7 +442,7 @@ public class Object3DData {
 
         // set color only if valid data
         if (color != null) {
-
+            Log.d("TAG", "!@# setColor: "+Arrays.toString(color));
             // color variable when using single color
             this.getMaterial().setDiffuse(color);
             this.getMaterial().setAlpha(color[3]);

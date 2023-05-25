@@ -49,8 +49,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Array;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,10 +61,17 @@ public class WavefrontLoader {
 
     private final int triangulationMode;
     private final LoadListener callback;
+    private float[] userSelectedObjColor;
 
     public WavefrontLoader(int triangulationMode, LoadListener callback) {
         this.triangulationMode = triangulationMode;
         this.callback = callback;
+        this.userSelectedObjColor = userSelectedObjColor;
+    }
+    public WavefrontLoader(int triangulationMode, LoadListener callback, float[] userSelectedObjColor) {
+        this.triangulationMode = triangulationMode;
+        this.callback = callback;
+        this.userSelectedObjColor = userSelectedObjColor;
     }
 
     @Nullable
@@ -180,9 +189,10 @@ public class WavefrontLoader {
             final InputStream inputStream = ContentUtils.getInputStream(meshData.getMaterialFile());
             Log.d("TAG", "!@# loadMaterials: InputStream code is done.");
 
+            Log.d("TAG", "!@# loadMaterials: userSelectedObjColor ==> "+ Arrays.toString(userSelectedObjColor));
             // parse materials
             final WavefrontMaterialsParser materialsParser = new WavefrontMaterialsParser();
-            final Materials materials = materialsParser.parse(meshData.getMaterialFile(), inputStream);
+            final Materials materials = materialsParser.parse(meshData.getMaterialFile(), inputStream, userSelectedObjColor);
 
             // check if there is any material
             Log.d("TAG", "!@# loadMaterials: materials.size(): "+materials.size());

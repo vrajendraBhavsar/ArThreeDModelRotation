@@ -1,6 +1,8 @@
 package org.the3deer.android_3d_model_engine.camera;
 
 
+import android.app.Activity;
+import android.opengl.Matrix;
 import android.util.Log;
 
 import org.the3deer.android_3d_model_engine.controller.TouchEvent;
@@ -9,6 +11,7 @@ import org.the3deer.android_3d_model_engine.model.Constants;
 import org.the3deer.android_3d_model_engine.model.Projection;
 import org.the3deer.android_3d_model_engine.view.ViewEvent;
 import org.the3deer.util.event.EventListener;
+import org.the3deer.util.math.Quaternion;
 
 import java.util.EventObject;
 
@@ -33,6 +36,32 @@ public final class CameraController implements EventListener {
         this.handlerPOV = new PointOfViewCamera(camera);
         this.handler = handlerDefault;
         this.handler.enable();
+    }
+
+    public void updateTranslateCamera(Float changePositionX, Activity mainActivity) {
+        Log.d("TAG", "!@# CameraController: changePositionX ==> " + changePositionX);
+        float max = Math.max(width, height);
+        float dx1 = (float) (changePositionX / 1500 * Math.PI * 2);
+        Log.d("TAG", "!@# CameraController: dx1 hoorah ==> " + dx1);
+        float dy1 = 0f; // This will not let model move in 360 (up and down)
+        float[] rotation = new float[16];
+
+        //EulerM
+//        Matrix.setRotateEulerM(rotation, 0, 0, 0, changePositionX);
+
+        //Quaternion
+//        Quaternion.axisAngle(Vector3(0.0f, 1.0f, 0.0f), 10f)
+
+//        handler.translateCamera(0.1f, dy1);
+
+        // Call the handler.translateCamera(dx1, dy1); method on the main thread.
+        /*mainActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Log.d("TAG", "!@# CameraController: dx1 runOnUiThread ==> " + dx1);
+                handler.translateCamera(dx1, dy1);
+            }
+        });*/
     }
 
     private void updateHandler(Projection projection) {
@@ -79,13 +108,18 @@ public final class CameraController implements EventListener {
                     break;
                 case MOVE:
                     float dx1 = touchEvent.getdX();
+                    Log.d("TAG", "!@# onEvent: dx1dx1dx1:::"+dx1);
 //                    float dy1 = touchEvent.getdY();
                     float dy1 = 0f; // This will not let model move in 360 (up and down)
                     float max = Math.max(width, height);
                     dx1 = (float) (dx1 / max * Math.PI * 2);
                     dy1 = (float) (dy1 / max * Math.PI * 2);
                     handler.translateCamera(dx1, dy1);
-                    Log.d("TAG", "!@# onEvent: dX ==> " + touchEvent.getdX() + ", dY ==> " + touchEvent.getdY());
+
+//                    Log.d("TAG", "!@# onEvent: max ==> " + max + ", dY ==> " + touchEvent.getdY());
+//                    handler.translateCamera(dx1, dy1);
+//                    handler.translateCamera(changePositionX, dy1);
+//                    Log.d("TAG", "!@# onEvent: changePositionX ==> " + changePositionX);
                     break;
                 case PINCH:
                     final float zoomFactor = ((TouchEvent) event).getZoom();

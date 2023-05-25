@@ -195,15 +195,16 @@ public class SceneLoader implements LoadListener, EventListener {
     private final Map<Object3DData, Transform> originalTransforms = new HashMap<>();
 
     private final List<EventListener> listeners = new ArrayList<>();
+    private float[] userSelectedObjColor;
+    /*public SceneLoader(Activity main) {
+        this(main, null, -1, new float[0]);
+    }*/
 
-    public SceneLoader(Activity main) {
-        this(main, null, -1);
-    }
-
-    public SceneLoader(Activity main, URI uri, int type) {
+    public SceneLoader(Activity main, URI uri, int type,  float[] userSelectedObjColor) {
         this.parent = main;
         this.uri = uri;
         this.type = type;
+        this.userSelectedObjColor = userSelectedObjColor;
 
         float light_distance = Constants.UNIT;
         lightBulb.setLocation(new float[]{light_distance / 2, light_distance, 0});
@@ -224,7 +225,7 @@ public class SceneLoader implements LoadListener, EventListener {
 
         Log.i("SceneLoader", "Loading model " + uri + ". async and parallel..");
         if (uri.toString().toLowerCase().endsWith(".obj") || type == 0) {
-            new WavefrontLoaderTask(parent, uri, this).execute();
+            new WavefrontLoaderTask(parent, uri, this, userSelectedObjColor).execute();
         } else if (uri.toString().toLowerCase().endsWith(".stl") || type == 1) {
             Log.i("SceneLoader", "Loading STL object from: " + uri);
             new STLLoaderTask(parent, uri, this).execute();

@@ -112,7 +112,7 @@ class DemoLoaderTask(parent: Activity?, uri: URI?, callback: LoadListener?) :
                         Rescaler.rescale(obj53, 2f)
                         this@DemoLoaderTask.onLoad(obj53)
                     }
-                }).load(URI("android://com.example.arthreedmodelrotation/assets/models/teapot.obj"))[0]
+                }, ).load(URI("android://com.example.arthreedmodelrotation/assets/models/teapot.obj"))[0]
 
                 //obj51.setScale(2f,2f,2f);
                 //obj51.setSize(0.5f);

@@ -10,13 +10,14 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
+import java.util.Objects;
 
 final class WavefrontMaterialsParser {
 
     /*
      * Parse the MTL file line-by-line, building Material objects which are collected in the materials ArrayList.
      */
-    Materials parse(String id, InputStream inputStream) {
+    Materials parse(String id, InputStream inputStream, float[] userSelectedObjColor) {
 
         Log.i("WavefrontMaterialsParse", "Parsing materials... ");
 
@@ -57,6 +58,9 @@ final class WavefrontMaterialsParser {
                     // configure material
                     currMaterial.setName(line.substring(6).trim());
 
+                    /**
+                     * Portion of Sofa who's color needed to be changed can be caught here
+                     */
                     // log event
                     Log.d("WavefrontMaterialsParse", "New material found: " + currMaterial.getName());
 
@@ -76,10 +80,22 @@ final class WavefrontMaterialsParser {
                     // log event
                     Log.v("WavefrontMaterialsParse", "Ambient color: " + Arrays.toString(currMaterial.getAmbient()));
                 } else if (line.startsWith("Kd ")) {
-
+                    float[] kdColor = Math3DUtils.parseFloat(line.substring(2).trim().split(" "));
+                    Log.d("TAG", "!@# parse: "+Arrays.toString(kdColor));
                     // diffuse colour
-                    currMaterial.setDiffuse(Math3DUtils.parseFloat(line.substring(2).trim().split(" ")));
+                    if (Objects.equals(currMaterial.getName(), "Procedural_Simple_Cloth")) {
+//                        float[] userKdColor = {0.000000f, 0.000000f, 1.000000f};
+//                        float[] userKdColor = {0.46666667f, 0.7882353f, 0.87058824f};
+//                        currMaterial.setDiffuse(userKdColor);
+                        Log.d("?", "!@# parse: Kd ==>"+Arrays.toString(userSelectedObjColor));
+                        currMaterial.setDiffuse(userSelectedObjColor);
+                    } else {
+                        currMaterial.setDiffuse(kdColor);
+                    }
 
+                    /**
+                     * Can change color of the part of the obj from here
+                     */
                     // log event
                     Log.v("WavefrontMaterialsParse", "Diffuse color: " + Arrays.toString(currMaterial.getDiffuse()));
                 } else if (line.startsWith("Ks ")) {

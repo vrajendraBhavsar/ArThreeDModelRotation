@@ -19,24 +19,32 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInteropFilter
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.example.arthreedmodelrotation.UrlUtil.BASE_URL_SOFA
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.arthreedmodelrotation.UrlUtil.BASE_URL_SOFA_WITH_PROGRESS_BAR
 import com.example.arthreedmodelrotation.ui.theme.ArThreeDModelRotationTheme
 import org.the3deer.android_3d_model_engine.camera.CameraController
 import org.the3deer.android_3d_model_engine.collision.CollisionController
@@ -56,10 +64,10 @@ import java.io.IOException
 import java.net.URI
 import java.net.URL
 import java.util.EventObject
+import kotlin.math.roundToInt
 
 
 class MainActivity : ComponentActivity(), EventListener {
-
     private val REQUEST_CODE_LOAD_TEXTURE = 1000
 
     /**
@@ -68,26 +76,17 @@ class MainActivity : ComponentActivity(), EventListener {
     private var paramType = 0
 
     /**
-     * The file to load. Passed as input parameter
-     */
-//    private var paramUri: URI? = null
-
-    /**
      * Background GL clear color. Default is light gray
      */
-    private val backgroundColor = floatArrayOf(0.0f, 0.0f, 0.0f, 0.0f)
-
+    private val backgroundColor = floatArrayOf(1.0f, 1.0f, 1.0f, 1.0f)
     private var glView: ModelSurfaceView? = null
     private var touchController: TouchController? = null
     private var scene: SceneLoader? = null
 
     //    private var gui: ModelViewerGUI? = null
     private var collisionController: CollisionController? = null
-
-
     private var handler: Handler? = null
     private var cameraController: CameraController? = null
-
     private var sensorManager: SensorManager? = null
     private var sensor: Sensor? = null
 
@@ -103,41 +102,126 @@ class MainActivity : ComponentActivity(), EventListener {
         super.onCreate(savedInstanceState)
         setContent {
             ArThreeDModelRotationTheme {
+                val mainViewModel: MainViewModel = viewModel()
+
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Column(modifier = Modifier.fillMaxSize()) {
+                        val buttonColor = remember {
+                            mutableStateOf("#FDC984")
+                        }
+
                         Box(modifier = Modifier.fillMaxWidth()) {
-                            loadModelFromAssets()
+                            Log.d("TAG", "!@# buttonColor: $buttonColor")
+                            LoadModelFromAssets(buttonColor)
+                            CameraControllerUpdater(mainViewModel.changePositionX.value)
                         }
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(Color.Red)
+//                                .background(Color.Red)
                         ) {
-                            Text(text = "Shalalala")
+                            Row(Modifier.fillMaxWidth()) {
+                                Button(
+                                    onClick = { buttonColor.value = "#FDC984" },
+                                    colors = ButtonDefaults.buttonColors(Color.Yellow)
+                                ) {}
+                                Button(
+                                    onClick = { buttonColor.value = "#CBE6D2" },
+                                    colors = ButtonDefaults.buttonColors(Color.Cyan)
+                                ) {}
+                                Button(
+                                    onClick = { buttonColor.value = "#77C9DE" },
+                                    colors = ButtonDefaults.buttonColors(Color.Blue)
+                                ) {}
+                            }
                         }
+//                        SeekBar(mainViewModel)
                     }
                 }
             }
         }
     }
 
-    //to get proper URI format like - android://org.andresoviedo.dddmodel2/assets/models/teapot.obj
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    private fun BoxScope.loadModelFromAssets() {
+    fun SeekBar(mainViewModel: MainViewModel) {
+        val boxPosition = remember { mutableStateOf(0.5f) }
+        val density = LocalDensity.current
+        val screenWidthPx = with(density) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
+        val offsetX = (boxPosition.value * screenWidthPx).roundToInt()
+
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .background(Color.LightGray)
+                    .fillMaxWidth()
+                    .height(4.dp)
+            )
+            Box(
+                modifier = Modifier
+                    .offset { IntOffset(offsetX, 0) }
+                    .size(40.dp)
+                    .background(Color.Blue)
+                    .pointerInteropFilter {
+                        when (it.action) {
+                            MotionEvent.ACTION_DOWN -> {}
+                            MotionEvent.ACTION_MOVE -> {
+                                Log.d("TAG", "!@# SeekBar: it.x:: ${it.x}")
+                                mainViewModel.changePositionX.value = it.x
+                                Log.d(
+                                    "TAG",
+                                    "!@# SeekBar: VM it.x:: ${mainViewModel.changePositionX.value}"
+                                )
+                                boxPosition.value = it.x.coerceIn(0f, 1f)
+                            }
+
+                            MotionEvent.ACTION_UP -> {}
+                            else -> false
+                        }
+                        true
+                    }
+            )
+        }
+    }
+
+    @Composable
+    fun CameraControllerUpdater(changePositionX: Float) {
+        Log.i("ModelActivity", "!@# changePositionX:: $changePositionX")
+        cameraController = CameraController(scene?.camera)
+        cameraController?.updateTranslateCamera(changePositionX, this)
+    }
+
+    @Composable
+    private fun LoadModelFromAssets(buttonColor: MutableState<String>?) {
         val TAG: String = MainActivity::class.java.simpleName
-        val uri = URI(BASE_URL_SOFA)
+        val uri = URI(BASE_URL_SOFA_WITH_PROGRESS_BAR)
         handler = Handler(mainLooper)
+
+//        val viewState = remember { mutableStateOf(0) }
+//        var viewKey = remember { mutableStateOf(0) }
+        var updatableString = remember { mutableStateOf("") }
 
         // Create our 3D scenario
         paramType = -1
-        Log.i("ModelActivity", "!@# paramUri => $uri, paramType => $paramType")
+        Log.i(
+            "ModelActivity",
+            "!@# paramUri => $uri, paramType => $paramType, buttonColor.value => ${buttonColor?.value}"
+        )
+
+//        val hexColorSofa = "#F78160"
+//        val rgbArraySofa = hexToRgb(hexColorSofa)
+        val rgbArraySofa = buttonColor?.value?.let {
+            Log.d(TAG, "!@# LoadModelFromAssets: it => $it")
+            hexToRgb(it)
+        }
+        Log.d(TAG, "!@# rgbArray: ${rgbArraySofa.contentToString()}")
 
         Log.i("ModelActivity", "Loading Scene...")
-        scene = SceneLoader(this@MainActivity, uri, paramType)
+        scene = SceneLoader(this@MainActivity, uri, paramType, rgbArraySofa)
         scene?.addListener(this@MainActivity)
 
         //FIXME: This "if" condition is simply to render default UI in case of uri failure
@@ -146,6 +230,17 @@ class MainActivity : ComponentActivity(), EventListener {
             val task: LoaderTask = DemoLoaderTask(this@MainActivity, null, scene)
             Log.d("TAG", "!@# loadModelFromAssets LoaderTask: $task")
             task.execute()
+        }
+
+        try {
+            Log.i("ModelActivity", "!@# Loading GLSurfaceView...scene:: $scene")
+            glView = ModelSurfaceView(this@MainActivity, backgroundColor, scene)
+            glView?.addListener(this@MainActivity)
+//            isLoading.value = false
+        } catch (e: Exception) {
+            Log.e("ModelActivity", "!@# " + e.message, e)
+//            errorMessage.value = "Error loading OpenGL view: ${e.message}"
+//            isLoading.value = false
         }
 
         val isLoading = remember { mutableStateOf(true) }
@@ -164,30 +259,59 @@ class MainActivity : ComponentActivity(), EventListener {
         }
 //        }
 
-        if (isLoading.value) {
-            // Show loading indicator or placeholder content
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-        } else {
-            if (errorMessage.value.isNotEmpty()) {
-                // Show error message
-                Toast.makeText(this@MainActivity, errorMessage.value, Toast.LENGTH_LONG).show()
-            } else {
-                // Show the GLSurfaceView
-                AndroidView(
-                    factory = { context ->
-                        glView?.setZOrderOnTop(true)
-                        glView?.holder?.setFormat(PixelFormat.TRANSLUCENT)
-                        glView!!
-                    },
-                    modifier = Modifier
-                        .size(width = 400.dp, height = 500.dp)
-                        .focusable(true),
-                    update = {
-                        glView?.addListener(this@MainActivity)
-                    }
-                )
+//        if (isLoading.value) {
+//            // Show loading indicator or placeholder content
+//            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+//        } else {
+//            if (errorMessage.value.isNotEmpty()) {
+//                // Show error message
+//                Toast.makeText(this@MainActivity, errorMessage.value, Toast.LENGTH_LONG).show()
+//            } else {
+        // Show the GLSurfaceView
+        var property = remember { mutableStateOf("") }
+        AndroidView(
+            factory = { context ->
+                try {
+                    Log.i("ModelActivity", "!@# Loading CameraController...")
+//                            Log.i("ModelActivity", "!@# changePositionX:: $changePositionX")
+//                            cameraController = CameraController(scene?.camera, changePositionX)
+                    Log.d(TAG, "!@# onCreate: cameraController: " + scene?.camera)
+                    Log.d(TAG, "!@# onCreate: cameraController OBJ: $cameraController")
+
+                    Log.d(TAG, "!@# LoadModelFromAssets: ${rgbArraySofa.contentToString()}")
+
+                    //glView.getModelRenderer().addListener(cameraController);
+                    //touchController.addListener(cameraController);
+                } catch (e: java.lang.Exception) {
+                    Log.e("ModelActivity", "!@# Loading CameraController..." + e.message, e)
+                    Toast.makeText(
+                        this@MainActivity,
+                        "Error loading CameraController" + e.message,
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+                buttonColor?.let { property = it }
+
+                glView?.setZOrderOnTop(true)
+                glView?.holder?.setFormat(PixelFormat.TRANSLUCENT)
+                glView!!
+            },
+            modifier = Modifier
+                .size(width = 400.dp, height = 500.dp)
+                .focusable(true),
+            update = {
+                property = updatableString
+
+                Log.i("ModelActivity", "!@# Loading CameraController UPDATE...")
+                glView?.setZOrderOnTop(true)
+                glView?.holder?.setFormat(PixelFormat.TRANSLUCENT)
+                glView!!
+
+                glView?.addListener(this@MainActivity)
             }
-        }
+        )
+//            }
+//        }
 
         /*try {
             Log.i("ModelActivity", "!@# Loading GLSurfaceView...")
@@ -239,9 +363,9 @@ class MainActivity : ComponentActivity(), EventListener {
             ).show()
         }
 
-        try {
+        /*try {
             Log.i("ModelActivity", "!@# Loading CameraController...")
-            cameraController = CameraController(scene?.camera)
+            cameraController = CameraController(scene?.camera, changePositionX)
             Log.d(TAG, "!@# onCreate: cameraController: " + scene?.camera)
             Log.d(TAG, "!@# onCreate: cameraController OBJ: $cameraController")
 
@@ -254,7 +378,7 @@ class MainActivity : ComponentActivity(), EventListener {
                 "Error loading CameraController" + e.message,
                 Toast.LENGTH_LONG
             ).show()
-        }
+        }*/
 
         try {
             // TODO: finish UI implementation
@@ -336,9 +460,6 @@ class MainActivity : ComponentActivity(), EventListener {
                 state.getFloatArray("camera.up")
             )
         }
-//        if (state.containsKey("renderer.skybox")) {
-//            glView?.setSkyBox(state.getInt("renderer.skybox"))
-//        }
     }
 
     private fun setupOrientationListener() {
@@ -449,5 +570,13 @@ class MainActivity : ComponentActivity(), EventListener {
             }
         }
         return true
+    }
+
+    private fun hexToRgb(hex: String): FloatArray {
+        val hexValue = hex.replace("#", "") // Remove the '#' character if present
+        val r = hexValue.substring(0, 2).toInt(16) / 255f
+        val g = hexValue.substring(2, 4).toInt(16) / 255f
+        val b = hexValue.substring(4, 6).toInt(16) / 255f
+        return floatArrayOf(r, g, b)
     }
 }

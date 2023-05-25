@@ -63,6 +63,7 @@ public class Camera {
     }
 
     public void setDelegate(Camera delegate) {
+        Log.d("TAG", "!@# setDelegate: "+delegate);
         this.delegate = delegate;
     }
 
@@ -121,6 +122,7 @@ public class Camera {
      * @param dY the Y component of the user 2D vector, that is, a value between [-1,1]
      */
     public synchronized void translateCamera(float dX, float dY) {
+//        Log.d("TAG", "!@# translateCamera: getDelegate():: "+getDelegate()+", dX:: "+dX+", dY:: "+dY);
         if (getDelegate() != null){
             getDelegate().translateCamera(dX, dY);
         }

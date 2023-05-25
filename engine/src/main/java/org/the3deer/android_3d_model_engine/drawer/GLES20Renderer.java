@@ -350,7 +350,11 @@ class GLES20Renderer implements Renderer {
         GLUtil.checkGlError("glGetUniformLocation");
 
         GLES20.glUniform4fv(handle, 1, uniform4f, 0);
-        GLUtil.checkGlError("glUniform4fv");
+        /*
+          It will change the color of entire model
+         */
+//        GLES20.glUniform4f(handle, 1.0f, 1.0f, 0.0f, 1.0f);
+        GLUtil.checkGlError("glUniform4f");
     }
 
     private void setUniformMatrix4(float[] matrix, String variableName) {
@@ -457,8 +461,6 @@ class GLES20Renderer implements Renderer {
     }
 
     private void drawShape(Object3DData obj, int drawMode, int drawSize) {
-
-
         int drawBufferType = -1;
         final Buffer drawOrderBuffer;
         final FloatBuffer vertexBuffer;

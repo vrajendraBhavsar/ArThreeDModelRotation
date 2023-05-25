@@ -1,6 +1,7 @@
 package org.the3deer.android_3d_model_engine.objects;
 
 import android.opengl.GLES20;
+import android.util.Log;
 
 import org.the3deer.android_3d_model_engine.model.Constants;
 import org.the3deer.android_3d_model_engine.model.Object3DData;

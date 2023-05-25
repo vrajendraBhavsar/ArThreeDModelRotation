@@ -70,7 +70,7 @@ public class ContentUtils {
     public static void provideAssets(Activity activity) {
         Log.i("ContentUtils", "Registering assets... ");
         documentsProvided.clear();
-        provideAssets(activity, MODELS_FOLDER);
+       provideAssets(activity, MODELS_FOLDER);
         Log.i("ContentUtils", "Assets found: "+ documentsProvided.size()/2);
     }
 
