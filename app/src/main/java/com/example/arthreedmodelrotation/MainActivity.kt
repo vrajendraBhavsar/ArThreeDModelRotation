@@ -146,48 +146,6 @@ class MainActivity : ComponentActivity(), EventListener {
         }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
-    @Composable
-    fun SeekBar(mainViewModel: MainViewModel) {
-        val boxPosition = remember { mutableStateOf(0.5f) }
-        val density = LocalDensity.current
-        val screenWidthPx = with(density) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
-        val offsetX = (boxPosition.value * screenWidthPx).roundToInt()
-
-        Box(modifier = Modifier.fillMaxWidth()) {
-            Box(
-                modifier = Modifier
-                    .background(Color.LightGray)
-                    .fillMaxWidth()
-                    .height(4.dp)
-            )
-            Box(
-                modifier = Modifier
-                    .offset { IntOffset(offsetX, 0) }
-                    .size(40.dp)
-                    .background(Color.Blue)
-                    .pointerInteropFilter {
-                        when (it.action) {
-                            MotionEvent.ACTION_DOWN -> {}
-                            MotionEvent.ACTION_MOVE -> {
-                                Log.d("TAG", "!@# SeekBar: it.x:: ${it.x}")
-                                mainViewModel.changePositionX.value = it.x
-                                Log.d(
-                                    "TAG",
-                                    "!@# SeekBar: VM it.x:: ${mainViewModel.changePositionX.value}"
-                                )
-                                boxPosition.value = it.x.coerceIn(0f, 1f)
-                            }
-
-                            MotionEvent.ACTION_UP -> {}
-                            else -> false
-                        }
-                        true
-                    }
-            )
-        }
-    }
-
     @Composable
     fun CameraControllerUpdater(changePositionX: Float) {
         Log.i("ModelActivity", "!@# changePositionX:: $changePositionX")
@@ -212,14 +170,11 @@ class MainActivity : ComponentActivity(), EventListener {
             "!@# paramUri => $uri, paramType => $paramType, buttonColor.value => ${buttonColor?.value}"
         )
 
-//        val hexColorSofa = "#F78160"
-//        val rgbArraySofa = hexToRgb(hexColorSofa)
         val rgbArraySofa = buttonColor?.value?.let {
             Log.d(TAG, "!@# LoadModelFromAssets: it => $it")
             hexToRgb(it)
         }
         Log.d(TAG, "!@# rgbArray: ${rgbArraySofa.contentToString()}")
-
         Log.i("ModelActivity", "Loading Scene...")
         scene = SceneLoader(this@MainActivity, uri, paramType, rgbArraySofa)
         scene?.addListener(this@MainActivity)
