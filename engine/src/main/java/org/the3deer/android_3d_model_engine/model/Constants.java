@@ -4,7 +4,7 @@ public class Constants {
     /**
      * Default unit factor for dimension on any axis
      */
-    public static final float UNIT = 1 * 7f;    //1 * 100f  -
+    public static final float UNIT = 1 * 200f;    //1 * 100f  -
     /**
      * Perspective camera. Near clipping panel
      */
@@ -12,11 +12,11 @@ public class Constants {
     /**
      * Perspective camera. Far clipping panel
      */
-    public static final float far = UNIT * UNIT * UNIT;
+    public static final float far = UNIT * UNIT;
     /**
      * Default camera position on Z axis
      */
-    public static final float DEFAULT_CAMERA_POSITION = UNIT * 2;
+    public static final float DEFAULT_CAMERA_POSITION = UNIT;
 
     public static final float SKYBOX_SIZE = UNIT * 100;
     public static final float[] LIGHT_BULB_LOCATION = {0, 0, 0, 1};

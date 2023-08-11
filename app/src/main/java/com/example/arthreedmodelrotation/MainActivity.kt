@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.arthreedmodelrotation.UrlUtil.BASE_URL_MALE_BODY
 import com.example.arthreedmodelrotation.UrlUtil.BASE_URL_SOFA_WITH_PROGRESS_BAR
 import com.example.arthreedmodelrotation.ui.theme.ArThreeDModelRotationTheme
 import org.the3deer.android_3d_model_engine.camera.CameraController
@@ -119,7 +120,7 @@ class MainActivity : ComponentActivity(), EventListener {
                             LoadModelFromAssets(buttonColor)
                             CameraControllerUpdater(mainViewModel.changePositionX.value)
                         }
-                        Box(
+                        /*Box(
                             modifier = Modifier
                                 .fillMaxWidth()
 //                                .background(Color.Red)
@@ -138,7 +139,7 @@ class MainActivity : ComponentActivity(), EventListener {
                                     colors = ButtonDefaults.buttonColors(Color.Blue)
                                 ) {}
                             }
-                        }
+                        }*/
 //                        SeekBar(mainViewModel)
                     }
                 }
@@ -156,7 +157,7 @@ class MainActivity : ComponentActivity(), EventListener {
     @Composable
     private fun LoadModelFromAssets(buttonColor: MutableState<String>?) {
         val TAG: String = MainActivity::class.java.simpleName
-        val uri = URI(BASE_URL_SOFA_WITH_PROGRESS_BAR)
+        val uri = URI(BASE_URL_MALE_BODY)
         handler = Handler(mainLooper)
 
 //        val viewState = remember { mutableStateOf(0) }
@@ -187,7 +188,7 @@ class MainActivity : ComponentActivity(), EventListener {
             task.execute()
         }
 
-        try {
+/*        try {
             Log.i("ModelActivity", "!@# Loading GLSurfaceView...scene:: $scene")
             glView = ModelSurfaceView(this@MainActivity, backgroundColor, scene)
             glView?.addListener(this@MainActivity)
@@ -196,7 +197,7 @@ class MainActivity : ComponentActivity(), EventListener {
             Log.e("ModelActivity", "!@# " + e.message, e)
 //            errorMessage.value = "Error loading OpenGL view: ${e.message}"
 //            isLoading.value = false
-        }
+        }*/
 
         val isLoading = remember { mutableStateOf(true) }
         val errorMessage = remember { mutableStateOf("") }
@@ -252,7 +253,8 @@ class MainActivity : ComponentActivity(), EventListener {
                 glView!!
             },
             modifier = Modifier
-                .size(width = 400.dp, height = 500.dp)
+                .fillMaxSize()
+//                .size(width = 400.dp, height = 500.dp)
                 .focusable(true),
             update = {
                 property = updatableString

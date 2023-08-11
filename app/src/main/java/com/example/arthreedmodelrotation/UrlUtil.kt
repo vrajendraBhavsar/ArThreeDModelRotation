@@ -1,11 +1,12 @@
 package com.example.arthreedmodelrotation
 
 object UrlUtil {
-//    const val BASE_URL = "android://com.example.arthreedmodelrotation/assets/models/ship.obj"
+    //    const val BASE_URL = "android://com.example.arthreedmodelrotation/assets/models/ship.obj"
     const val BASE_URL_SOFA = "android://com.example.arthreedmodelrotation/assets/models/Sofa.obj"
     const val BASE_URL_SOFA_WITH_PROGRESS_BAR = "android://com.example.arthreedmodelrotation/assets/models/SofaWithProgressBar.obj"
     const val BASE_URL = "android://com.example.arthreedmodelrotation/assets/models/"
-//    const val BASE_URL = "android://com.example.arthreedmodelrotation/assets/models/Avocado.gltf"
+
+    //    const val BASE_URL = "android://com.example.arthreedmodelrotation/assets/models/Avocado.gltf"
 //        val baseUrl = "file:///android_asset/models/Avocado.gltf"
 //        val baseUrl = "android://${packageName}/assets/models/Avocado.gltf"
 //        val baseUrl = "android://${packageName}/assets/models/ToyPlane.obj"
@@ -14,4 +15,9 @@ object UrlUtil {
 //        val baseUrl = "android://${packageName}/assets/models/sketch.gltf"
 //        val baseUrl = "android://${packageName}/assets/models/scene.gltf"
 //        val baseUrl = "android://${packageName}/assets/models/rough_plaster_broken_4k.gltf"
+
+//    const val BASE_URL_MALE_BODY = "android://com.example.arthreedmodelrotation/assets/models/cgtrader_male_model.obj"
+//    const val BASE_URL_MALE_BODY = "android://com.example.arthreedmodelrotation/assets/models/FinalBaseMesh.obj"
+const val BASE_URL_MALE_BODY = "android://com.example.arthreedmodelrotation/assets/mascular_man_ios/Muscular_Man.obj"
+
 }
