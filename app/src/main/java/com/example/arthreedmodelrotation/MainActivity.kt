@@ -157,7 +157,7 @@ class MainActivity : ComponentActivity(), EventListener {
     @Composable
     private fun LoadModelFromAssets(buttonColor: MutableState<String>?) {
         val TAG: String = MainActivity::class.java.simpleName
-        val uri = URI(BASE_URL_MALE_BODY)
+        val uri = URI(BASE_URL_SOFA_WITH_PROGRESS_BAR)
         handler = Handler(mainLooper)
 
 //        val viewState = remember { mutableStateOf(0) }
